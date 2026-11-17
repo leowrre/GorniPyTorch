@@ -9,11 +9,11 @@ init python:
     class GearMachineGame(object):
         # Модуль зацепления m = 15.5 px: R = teeth * 7.75
         GEAR_SPECS = {
-            "S": {"title": "Малая шестерня (8 зуб.)", "short": "МАЛАЯ • 8", "teeth": 8, "r": 62,
+            "S": {"title": "Малая шестерня", "short": "МАЛАЯ", "teeth": 8, "r": 62,
                   "fill": "#3399ee", "rim": "#1d5d96", "hub": "#99ddff"},
-            "M": {"title": "Средняя шестерня (12 зуб.)", "short": "СРЕДНЯЯ • 12", "teeth": 12, "r": 93,
+            "M": {"title": "Средняя шестерня", "short": "СРЕДНЯЯ", "teeth": 12, "r": 93,
                   "fill": "#f0a028", "rim": "#9c6212", "hub": "#ffe08a"},
-            "L": {"title": "Большая шестерня (16 зуб.)", "short": "БОЛЬШАЯ • 16", "teeth": 16, "r": 124,
+            "L": {"title": "Большая шестерня", "short": "БОЛЬШАЯ", "teeth": 16, "r": 124,
                   "fill": "#48c774", "rim": "#237341", "hub": "#b8f5cd"},
         }
 
@@ -302,38 +302,33 @@ init python:
 
             rv = renpy.Render(self.W, self.H)
             cv = rv.canvas()
-            cv.rect("#12161c", (0, 0, self.W, self.H))
+            cv.rect("#05122c", (0, 0, self.W, self.H))
 
-            # --- Левый лоток с деталями ---
-            cv.rect("#18202a", (8, 12, 416, self.H - 24))
-            cv.rect("#34465a", (8, 12, 416, self.H - 24), 3)
-            mg_text(rv, "ШЕСТЕРНИ:", 216, 28, 28, "#ffcc33", True, align=0.5, st=st, at=at)
-            mg_text(rv, "перетащите на оси справа", 216, 64, 19, "#9ab4cc", False, align=0.5, st=st, at=at)
+            # --- Левый лоток с деталями в стиле Persona 3 Reload ---
+            cv.rect("#092252", (8, 12, 416, self.H - 24))
+            cv.rect("#00d8ff", (8, 12, 416, self.H - 24), 3)
+            mg_text(rv, "ШЕСТЕРНИ", 236, 40, 28, "#ffffff", True, align=0.5, st=st, at=at)
 
             for i, (gid, sz) in enumerate(g.free_items()):
                 sp = g.GEAR_SPECS[sz]
                 cy = self.TRAY_Y + i * self.CARD_STEP
-                cv.rect("#222e3c", (self.TRAY_X, cy, self.TRAY_W, self.CARD_H))
+                cv.rect("#0d3074", (self.TRAY_X, cy, self.TRAY_W, self.CARD_H))
                 cv.rect(sp["fill"], (self.TRAY_X, cy, self.TRAY_W, self.CARD_H), 2)
                 icon_r = 26 if sz == "S" else (34 if sz == "M" else 42)
                 self.draw_gear(cv, self.TRAY_X + 64, cy + self.CARD_H // 2, icon_r, sp["teeth"], 0.2,
                                sp["fill"], sp["rim"], sp["hub"], False)
-                mg_text(rv, sp["short"], self.TRAY_X + 128, cy + 28, 25, "#ffffff", True, st=st, at=at)
-                mg_text(rv, "Ø %d мм" % (sp["r"] * 2), self.TRAY_X + 128, cy + 66, 20, sp["hub"], False, st=st, at=at)
+                mg_text(rv, sp["short"], self.TRAY_X + 128, cy + 44, 25, "#ffffff", True, st=st, at=at)
 
-            # --- Стальной корпус редуктора станка ---
+            # --- Стальной корпус редуктора станка (исходный вид) ---
             cv.rect("#1b222b", (self.BOX_X, self.BOX_Y, self.BOX_W, self.BOX_H))
             cv.rect("#ffcc33", (self.BOX_X, self.BOX_Y, self.BOX_W, self.BOX_H), 4)
-            cv.rect("#232c37", (self.BOX_X + 18, self.BOX_Y + 62, self.BOX_W - 36, self.BOX_H - 80))
+            cv.rect("#232c37", (self.BOX_X + 18, self.BOX_Y + 18, self.BOX_W - 36, self.BOX_H - 36))
 
             # Декоративные болты по углам кожуха
             for bx in (self.BOX_X + 26, self.BOX_X + self.BOX_W - 26):
                 for by in (self.BOX_Y + 26, self.BOX_Y + self.BOX_H - 26):
                     cv.circle("#4b5a6b", (bx, by), 9)
                     cv.circle("#141920", (bx, by), 4)
-
-            mg_text(rv, "КОРОБКА ПЕРЕДАЧ ПРОМЫШЛЕННОГО СТАНКА", self.BOX_X + self.BOX_W // 2, 24,
-                    26, "#ffcc33", True, align=0.5, st=st, at=at)
 
             # --- Подсказывающие масляные каналы между валами ---
             links = [
@@ -378,20 +373,17 @@ init python:
                     hub_c = "#b8ffd0" if is_spin else "#a5b2c0"
                 self.draw_gear(cv, fx, fy, sp["r"], sp["teeth"], angles[nid], fill_c, rim_c, hub_c, is_spin)
 
-                # Подписи мотора и выходных узлов
+                # Короткие лаконичные подписи мотора и выходных узлов
                 if fn["role"] == "motor":
-                    cv.rect("#121820eb", (fx - 76, fy + 116, 152, 76))
-                    cv.rect("#ff7744", (fx - 76, fy + 116, 152, 76), 2)
+                    cv.rect("#121820eb", (fx - 72, fy + 116, 144, 48))
+                    cv.rect("#ff7744", (fx - 72, fy + 116, 144, 48), 2)
                     mg_text(rv, fn["label"], fx, fy + 126, 22, "#ff9966", True, align=0.5, st=st, at=at)
-                    mg_text(rv, "ведущий вал", fx, fy + 156, 17, "#ffd0b8", False, align=0.5, st=st, at=at)
                 else:
                     lx = fx + sp["r"] + 26
-                    cv.rect("#121820eb", (lx, fy - 42, 236, 84))
-                    cv.rect("#44ff77" if is_spin else "#ff5555", (lx, fy - 42, 236, 84), 3)
+                    cv.rect("#121820eb", (lx, fy - 28, 226, 56))
+                    cv.rect("#44ff77" if is_spin else "#ff5555", (lx, fy - 28, 226, 56), 3)
                     cv.circle("#33ff66" if is_spin else "#ff3333", (lx + 26, fy), 12)
-                    mg_text(rv, fn["label"], lx + 48, fy - 28, 22, "#66ff88" if is_spin else "#ffffff", True, st=st, at=at)
-                    mg_text(rv, "ВРАЩАЕТСЯ!" if is_spin else "СТОИТ", lx + 48, fy + 4, 18,
-                            "#99ffbb" if is_spin else "#ff8888", False, st=st, at=at)
+                    mg_text(rv, fn["label"], lx + 48, fy - 14, 22, "#66ff88" if is_spin else "#ffffff", True, st=st, at=at)
 
             # --- Отрисовка установленных игроком шестерней ---
             for p in g.PINS:
@@ -413,10 +405,6 @@ init python:
                 self.draw_gear(drag_layer.canvas(), int(mx), int(my), sp["r"], sp["teeth"],
                                motor_angle * 0.5, sp["fill"], sp["rim"], "#ffffff", False)
                 rv.blit(drag_layer, (0, 0))
-
-            # Нижняя подсказка внутри кожуха
-            mg_text(rv, g.status_hint, self.BOX_X + self.BOX_W // 2, self.H - 46,
-                    21, "#d8e6f3", False, align=0.5, st=st, at=at)
 
             renpy.redraw(self, 0.03)
             return rv
@@ -510,12 +498,16 @@ screen screen_minigame_pipes():
 
     $ gears_ok = mg_pipes.ok_count()
 
+    if gears_ok >= 3:
+        timer 1.5 action Return(True)
+
     fixed:
         xsize 1920
         ysize 1080
 
-        add Solid("#101419")
+        add Solid("#05102a")
         add GearMachineDisplayable(mg_pipes) xpos 30 ypos 22
+        add Transform("images/ui/logo_pgt_white.png", size=(52, 52), fit="contain") xpos 54 ypos 48
 
         hbox:
             xpos 36
@@ -524,40 +516,39 @@ screen screen_minigame_pipes():
             spacing 30
 
             frame:
-                background Solid("#1d242ef2")
+                background Frame("images/ui/round_panel.png", 20, 20)
                 yalign 0.5
                 padding (28, 16)
-                text "Узлы станка: [gears_ok] / 3" size 30 color ("#66ff88" if gears_ok == 3 else "#ffcc33") bold True
+                text "[gears_ok] / 3" size 30 color ("#7ae8ff" if gears_ok == 3 else "#ffffff") bold True
 
-            hbox:
-                xalign 1.0
-                spacing 24
-                if gears_ok < 3:
+            if gears_ok < 3:
+                hbox:
+                    xalign 1.0
+                    yalign 0.5
+                    spacing 24
                     if mg_pipes.moves >= 12:
-                        frame:
-                            background Solid("#3d2b18f2")
-                            padding (6, 6)
-                            textbutton "Помощь":
-                                action Function(mg_pipes.solve)
-                                text_size 26
-                                text_bold True
-                                text_color "#ffcc66"
-                                padding (28, 14)
-                    frame:
-                        background Solid("#222b36f2")
-                        padding (6, 6)
-                        textbutton "Заново":
-                            action Function(mg_pipes.reset)
+                        textbutton "Помощь":
+                            action Function(mg_pipes.solve)
+                            background Frame("images/ui/round_mg_amber.png", 18, 18)
+                            hover_background Frame("images/ui/round_mg_amber_hover.png", 18, 18)
                             text_size 26
                             text_bold True
-                            padding (28, 14)
-                else:
-                    frame:
-                        background Solid("#154d2bf5")
-                        padding (6, 6)
-                        textbutton "ГОТОВО":
-                            action Return(True)
-                            text_size 34
-                            text_bold True
-                            text_color "#66ff88"
-                            padding (56, 16)
+                            text_color "#ffffff"
+                            padding (32, 16)
+                    textbutton "Заново":
+                        action Function(mg_pipes.reset)
+                        background Frame("images/ui/round_btn_idle.png", 18, 18)
+                        hover_background Frame("images/ui/round_btn_hover.png", 18, 18)
+                        text_size 26
+                        text_bold True
+                        text_color "#ffffff"
+                        padding (32, 16)
+
+        # Плашка по центру экрана, когда станок собран верно (исчезает через 1.5 секунды)
+        if gears_ok >= 3:
+            frame:
+                xalign 0.5
+                yalign 0.5
+                background Frame("images/ui/round_mg_green.png", 24, 24)
+                padding (68, 36)
+                text "СТАНОК СОБРАН ВЕРНО!" size 44 color "#ffffff" bold True xalign 0.5 text_align 0.5

@@ -16,32 +16,32 @@ init python:
         PICKUP_DIST = 78
         HALF_FOV = 0.53
 
-        # Просторная расстановка оборудования с широкими проходами
+        # Просторная расстановка оборудования с широкими проходами (сдвинуто вправо от крестовины)
         OBST = [
-            (220, 120, 200, 230, "СТОЛ", "images/mg/equip_table.png"),
-            (220, 610, 200, 230, "СТОЛ", "images/mg/equip_table.png"),
-            (620, 350, 220, 260, "ПЛИТА", "images/mg/equip_stove.png"),
-            (980, 105, 250, 130, "МОЙКА", "images/mg/equip_sink.png"),
-            (980, 725, 250, 130, "РАЗДЕЛКА", "images/mg/equip_prep.png"),
-            (1325, 340, 110, 280, "ХОЛОД.", "images/mg/equip_fridge.png"),
+            (250, 120, 190, 220, "СТОЛ", "images/mg/equip_table.png"),
+            (350, 610, 190, 220, "СТОЛ", "images/mg/equip_table.png"),
+            (700, 350, 210, 250, "ПЛИТА", "images/mg/equip_stove.png"),
+            (1030, 105, 230, 125, "МОЙКА", "images/mg/equip_sink.png"),
+            (1030, 725, 230, 125, "РАЗДЕЛКА", "images/mg/equip_prep.png"),
+            (1335, 340, 105, 280, "ХОЛОД.", "images/mg/equip_fridge.png"),
         ]
 
         # Все продукты разложены на столах/плите/холодильнике (есть нужные и ловушки!)
         INGR = [
-            {"id": "bun", "name": "Булочки", "x": 392, "y": 235, "col": "#e0a95f", "need": True},
-            {"id": "lettuce", "name": "Салат", "x": 392, "y": 725, "col": "#5fcf4a", "need": True},
-            {"id": "patty", "name": "Котлета", "x": 730, "y": 378, "col": "#7a4424", "need": True},
-            {"id": "bacon", "name": "Бекон", "x": 648, "y": 480, "col": "#c8553d", "need": False},
-            {"id": "tomato", "name": "Помидор", "x": 1105, "y": 208, "col": "#e8412c", "need": True},
-            {"id": "cheese", "name": "Сыр", "x": 1045, "y": 752, "col": "#ffd23f", "need": True},
-            {"id": "cucumber", "name": "Огурцы", "x": 1175, "y": 752, "col": "#3f9c35", "need": False},
-            {"id": "sauce", "name": "Соус", "x": 1352, "y": 480, "col": "#ff7a1a", "need": True},
+            {"id": "bun", "name": "Булочки", "x": 415, "y": 230, "col": "#e0a95f", "need": True},
+            {"id": "lettuce", "name": "Салат", "x": 515, "y": 720, "col": "#5fcf4a", "need": True},
+            {"id": "patty", "name": "Котлета", "x": 805, "y": 378, "col": "#7a4424", "need": True},
+            {"id": "bacon", "name": "Бекон", "x": 728, "y": 475, "col": "#c8553d", "need": False},
+            {"id": "tomato", "name": "Помидор", "x": 1145, "y": 205, "col": "#e8412c", "need": True},
+            {"id": "cheese", "name": "Сыр", "x": 1090, "y": 752, "col": "#ffd23f", "need": True},
+            {"id": "cucumber", "name": "Огурцы", "x": 1205, "y": 752, "col": "#3f9c35", "need": False},
+            {"id": "sauce", "name": "Соус", "x": 1360, "y": 480, "col": "#ff7a1a", "need": True},
         ]
 
         COOKS = [
-            {"name": "Повар-кондитер", "wps": [(520, 105), (520, 855)], "range": 300},
-            {"name": "Шеф-повар", "wps": [(905, 295), (905, 665), (1250, 665), (1250, 295)], "range": 305},
-            {"name": "Су-шеф", "wps": [(1380, 165)], "sweep": True, "base": 2.45, "range": 335},
+            {"name": "Повар-кондитер", "wps": [(620, 105), (620, 855)], "range": 300},
+            {"name": "Шеф-повар", "wps": [(970, 285), (970, 675), (1255, 675), (1255, 285)], "range": 305},
+            {"name": "Су-шеф", "wps": [(1385, 165)], "sweep": True, "base": 2.45, "range": 335},
         ]
 
         def __init__(self):
@@ -394,26 +394,16 @@ init python:
 
             rv.blit(objs, (0, 0))
 
-            # Всплывающий баннер штрафа/тревоги
-            if g.banner_timer > 0 and g.banner_text:
-                ban = renpy.Render(self.W, 54)
-                ban.canvas().rect("#2b0d10ee", (40, 0, self.W - 80, 52))
-                ban.canvas().rect(g.banner_col, (40, 0, self.W - 80, 52), 3)
-                mg_text(ban, g.banner_text, self.W // 2, 12, 22, g.banner_col, True, align=0.5, st=st, at=at)
-                rv.blit(ban, (0, T + 12))
-
-            # Лаконичный верхний HUD с попытками
+            # Лаконичный верхний HUD в стиле Persona 3 Reload
             need_total = sum(1 for it in g.INGR if it["need"])
             got = need_total - len(g.need_left())
             lives_left = max(0, g.MAX_CATCHES - g.caught_count)
             if g.has_all() and not g.done:
-                hud = "%d / %d СОБРАНО  —  БЕГОМ К ВЫХОДУ СЛЕВА!" % (got, need_total)
-                hcol = "#66ff88"
+                hud = "%d / %d  —  К ВЫХОДУ" % (got, need_total)
+                hcol = "#00e5ff"
             else:
-                hud = "Продукты: %d / %d      Попытки: %d / %d      Штрафы: %d" % (
-                    got, need_total, lives_left, g.MAX_CATCHES, g.total_catches + g.extra_count()
-                )
-                hcol = "#ffcc66"
+                hud = "Продукты: %d / %d      Попытки: %d / %d" % (got, need_total, lives_left, g.MAX_CATCHES)
+                hcol = "#ffffff"
             mg_text(rv, hud, self.W // 2, 13, 25, hcol, True, align=0.5, st=st, at=at)
 
             if not g.done and not g.penalty_popup:
@@ -562,6 +552,8 @@ init python:
                     self.stack.append({"id": dropped_id, "off": off, "ok": ok})
                     if ok:
                         mg_sfx("audio/burger_drop.wav")
+                        if self.all_ok():
+                            self.serve()
                     else:
                         self.mistakes += 1
                         mg_sfx("audio/turnstile_fail.wav")
@@ -608,8 +600,8 @@ init python:
             rv = renpy.Render(self.W, self.H)
             cv = rv.canvas()
 
-            # Фотография учебного цеха поваров на заднем плане + стальная/деревянная столешница
-            cv.rect("#1a1410", (0, 0, self.W, self.H))
+            # Фотография учебного цеха поваров на заднем плане + прежний цвет столешницы
+            cv.rect("#05122c", (0, 0, self.W, self.H))
             if renpy.loadable("images/bg/pgt_culinary_hall.png"):
                 if BurgerDisplayable._bg_cache is None:
                     BurgerDisplayable._bg_cache = Transform(
@@ -624,31 +616,30 @@ init python:
             cv.rect("#5f6b76", (self.ARENA_X, 850, self.W - self.ARENA_X, 230))
             cv.rect("#9aa8b5", (self.ARENA_X, 850, self.W - self.ARENA_X, 14))
 
-            # Чек заказа Семёна слева
-            cv.rect("#f5efe0", (24, 26, 366, 900))
-            cv.rect("#cbbba0", (24, 26, 366, 900), 4)
-            mg_text(rv, "ЗАКАЗ СЕМЁНА", 207, 42, 27, "#3b2a1a", True, align=0.5, st=st, at=at)
-            mg_text(rv, "снизу вверх • штрафы: %d" % g.mistakes, 207, 80, 18,
-                    "#cc2b1d" if g.mistakes > 0 else "#7a6852", True, align=0.5, st=st, at=at)
+            # Список слоёв слева в стиле Persona 3 Reload (Белый-Синий-Голубой)
+            cv.rect("#f2f8ff", (24, 26, 366, 900))
+            cv.rect("#0b2868", (24, 26, 366, 72))
+            cv.rect("#00d4ff", (24, 26, 366, 900), 4)
+            mg_text(rv, "РЕЦЕПТ", 224, 44, 30, "#ffffff", True, align=0.5, st=st, at=at)
 
             for i, lid in enumerate(reversed(g.ORDER)):
                 idx = len(g.ORDER) - 1 - i
-                ry = 132 + i * 108
+                ry = 122 + i * 110
                 info = g.info(lid)
                 is_next = (idx == len(g.stack) and not g.has_wrong())
                 if is_next:
-                    cv.rect("#ffe89c", (38, ry - 6, 338, 92))
-                    cv.rect("#e0a82e", (38, ry - 6, 338, 92), 2)
+                    cv.rect("#cceeff", (38, ry - 6, 338, 92))
+                    cv.rect("#00a8f0", (38, ry - 6, 338, 92), 3)
 
                 mg_blit_img(rv, "images/mg/ingr_%s.png" % info["src"], 78, ry + 38, 64, 64, st=st, at=at)
-                mg_text(rv, "%d. %s" % (idx + 1, info["name"]), 120, ry + 22, 23, "#2e1f12", True, st=st, at=at)
+                mg_text(rv, "%d. %s" % (idx + 1, info["name"]), 120, ry + 22, 23, "#082567", True, st=st, at=at)
 
-                mark, mcol = "•", "#9a8a72"
+                mark, mcol = "•", "#6b94c8"
                 if idx < len(g.stack):
                     if g.stack[idx]["ok"]:
-                        mark, mcol = "+", "#1b8a38"
+                        mark, mcol = "+", "#0088ee"
                     else:
-                        mark, mcol = "Х", "#cc2b1d"
+                        mark, mcol = "Х", "#1b449c"
                 mg_text(rv, mark, 358, ry + 18, 28, mcol, True, align=1.0, st=st, at=at)
 
             # PNG-тарелка на столе
@@ -660,7 +651,7 @@ init python:
             if not g.served and g.holding:
                 hx_f = g.hand_x()
                 on_plate = abs(hx_f - px) <= 185
-                cv.line("#66ff8844" if on_plate else "#ff554444", (int(hx_f), 230), (int(hx_f), int(py - g.stack_height())), 3)
+                cv.line("#00e5ff66" if on_plate else "#ffffff44", (int(hx_f), 230), (int(hx_f), int(py - g.stack_height())), 3)
 
             # Собранные PNG-слои бутера на тарелке
             yb = py
@@ -668,7 +659,7 @@ init python:
                 info = g.info(layer["id"])
                 self._blit_burger_layer(rv, layer["id"], px + layer["off"], yb, st, at)
                 if not layer["ok"]:
-                    cv.rect("#ff3322", (int(px + layer["off"] - 165), int(yb - info["h"] - 8), 330, info["h"] + 12), 4)
+                    cv.rect("#00e5ff", (int(px + layer["off"] - 165), int(yb - info["h"] - 8), 330, info["h"] + 12), 4)
                 yb -= info["h"]
 
             # Падающий PNG-ингредиент при выбросе на тарелку
@@ -684,14 +675,8 @@ init python:
                 mg_blit_img(rv, "images/mg/burger_hand.png", hx, 0, 216, 225,
                             align_x=0.5, align_y=0.0, st=st, at=at)
 
-            if g.penalty_timer > 0 and g.penalty_msg and not g.served:
-                cv.rect("#330d10ee", (self.ARENA_X + 40, 248, self.W - self.ARENA_X - 80, 56))
-                cv.rect("#ff5544", (self.ARENA_X + 40, 248, self.W - self.ARENA_X - 80, 56), 3)
-                mg_text(rv, g.penalty_msg, px, 262, 24, "#ff8877", True, align=0.5, st=st, at=at)
-            elif g.has_wrong() and not g.served:
-                mg_text(rv, "НЕ ПО РЕЦЕПТУ — СБРОСЬТЕ БУТЕР", px, 290, 30, "#ff6655", True, align=0.5, st=st, at=at)
-            elif g.all_ok():
-                mg_text(rv, "БУТЕР ГОТОВ!", px, 280, 44, "#ffe066", True, align=0.5, st=st, at=at)
+            if g.has_wrong() and not g.served:
+                mg_text(rv, "ОШИБКА СЛОЯ", px, 290, 34, "#00e5ff", True, align=0.5, st=st, at=at)
 
             if not g.served:
                 renpy.redraw(self, 0)
@@ -736,14 +721,15 @@ screen screen_minigame_kitchen():
 
         # Арена кухни 1460 x 1018
         add KitchenStealDisplayable(mg_kitchen) xpos 20 ypos 30
+        add Transform("images/ui/logo_pgt_white.png", size=(48, 48), fit="contain") xpos 34 ypos 35
 
-        # Правая панель: список Семёна с PNG-иконками + сенсорная крестовина
+        # Правая скруглённая панель: список Семёна с PNG-иконками + сенсорная крестовина
         frame:
             xpos 1500
             ypos 30
             xsize 400
             ysize 1018
-            background Solid("#1d242cf5")
+            background Frame("images/ui/round_panel.png", 26, 26)
             padding (22, 20)
 
             vbox:
@@ -753,84 +739,79 @@ screen screen_minigame_kitchen():
 
                 hbox:
                     xfill True
-                    text "СПИСОК:" size 26 color "#ffcc66" bold True yalign 0.5
+                    text "СПИСОК" size 26 color "#ffffff" bold True yalign 0.5
                     if not mg_kitchen.done:
                         textbutton "Сброс":
                             action Function(mg_kitchen.reset, False)
                             keyboard_focus False
                             xalign 1.0
-                            text_size 22
+                            background Frame("images/ui/round_btn_idle.png", 14, 14)
+                            hover_background Frame("images/ui/round_btn_hover.png", 14, 14)
+                            text_size 20
                             text_bold True
-                            padding (14, 6)
+                            text_color "#ffffff"
+                            padding (18, 8)
 
                 for it in mg_kitchen.INGR:
                     if it["need"]:
                         $ got_it = it["id"] in mg_kitchen.collected
                         frame:
                             xfill True
-                            background Solid("#1c3822" if got_it else "#131920")
-                            padding (12, 8)
+                            background Frame("images/ui/round_badge_green.png" if got_it else "images/ui/round_btn_idle.png", 16, 16)
+                            padding (14, 8)
                             hbox:
                                 spacing 14
                                 add Transform("images/mg/ingr_" + it["id"] + ".png", size=(48, 48), fit="contain") yalign 0.5
-                                text it["name"] size 23 bold True color ("#77ff88" if got_it else "#f2e6d8") yalign 0.5
-                                text ("+" if got_it else "") size 26 bold True color "#66ff88" xalign 1.0 yalign 0.5
+                                text it["name"] size 23 bold True color "#ffffff" yalign 0.5
+                                text ("+" if got_it else "") size 26 bold True color "#ffffff" xalign 1.0 yalign 0.5
 
-                null height 10
-
-                if not mg_kitchen.done:
-                    add MGTouchPad(mg_kitchen, size=272) xalign 0.5
-                else:
-                    frame:
-                        background Solid("#154d2bf8")
+                if mg_kitchen.done:
+                    null height 18
+                    textbutton "СОБРАТЬ БУТЕР":
+                        action Return(True)
                         xfill True
-                        padding (8, 8)
-                        textbutton "СОБРАТЬ БУТЕР":
-                            action Return(True)
-                            xfill True
-                            text_size 28
-                            text_bold True
-                            text_color "#66ff88"
-                            text_xalign 0.5
-                            padding (18, 28)
+                        background Frame("images/ui/round_mg_green.png", 20, 20)
+                        hover_background Frame("images/ui/round_mg_green_hover.png", 20, 20)
+                        text_size 28
+                        text_bold True
+                        text_color "#ffffff"
+                        text_xalign 0.5
+                        padding (18, 30)
 
-        # Модальное окно проигрыша, когда повара поймали 3 раза!
+        # Сенсорная крестовина слева снизу
+        if not mg_kitchen.done:
+            add MGTouchPad(mg_kitchen, size=258) xpos 36 ypos 754
+
+        # Модальное скруглённое окно проигрыша без лишнего текста
         if mg_kitchen.penalty_popup:
             button:
                 xfill True
                 yfill True
-                background Solid("#000000bb")
+                background Solid("#030a1cbb")
                 action Function(mg_kitchen.dismiss_penalty)
 
             frame:
                 xalign 0.5
                 yalign 0.5
-                xsize 880
-                background Solid("#4a141af8")
-                padding (6, 6)
+                xsize 680
+                background Frame("images/ui/round_mg_red_modal.png", 28, 28)
+                padding (44, 38)
 
-                frame:
-                    xfill True
-                    background Solid("#1a1216fa")
-                    padding (40, 34)
+                vbox:
+                    spacing 24
+                    xalign 0.5
 
-                    vbox:
-                        spacing 20
+                    text "Вас выдвинули с кухни" size 38 color "#7ae8ff" bold True xalign 0.5 text_align 0.5
+
+                    textbutton "Заново":
                         xalign 0.5
-
-                        text "Вас выдвинули с кухни" size 38 color "#ff6655" bold True xalign 0.5 text_align 0.5
-                        text "Повара засекли вас 3 раза подряд! Шеф-повар отобрал все спрятанные ингредиенты и выставил за порог.\nСледите за конусами обзора и прячьтесь за столами!" size 23 color "#f0e6e8" xalign 0.5 text_align 0.5 line_spacing 6
-
-                        frame:
-                            xalign 0.5
-                            background Solid("#8c2632")
-                            padding (4, 4)
-                            textbutton "Проскользнуть заново":
-                                action Function(mg_kitchen.dismiss_penalty)
-                                text_size 26
-                                text_bold True
-                                text_color "#ffffff"
-                                padding (42, 14)
+                        action Function(mg_kitchen.dismiss_penalty)
+                        background Frame("images/ui/round_mg_red_btn.png", 18, 18)
+                        hover_background Frame("images/ui/round_mg_red_btn_hover.png", 18, 18)
+                        text_size 26
+                        text_bold True
+                        text_color "#ffffff"
+                        padding (48, 16)
 
 # ------------------------------------------------------------------------------
 # ЭКРАН: СБОРКА БУТЕРА (ФОТО КУХНИ + PNG-КАРТОЧКИ + ШТРАФЫ)
@@ -838,63 +819,66 @@ screen screen_minigame_kitchen():
 screen screen_minigame_burger():
     modal True
 
+    if mg_burger.all_ok():
+        timer 1.5 action [Function(mg_burger.serve), Return(True)]
+
     fixed:
         xsize 1920
         ysize 1080
 
         add BurgerDisplayable(mg_burger) xpos 0 ypos 0
+        add Transform("images/ui/logo_pgt_white.png", size=(48, 48), fit="contain") xpos 40 ypos 38
 
-        # Кнопка разбора бутера под чеком слева
-        if not mg_burger.served:
-            frame:
+        # Скруглённая кнопка разбора бутера под чеком слева
+        if not mg_burger.served and not mg_burger.all_ok():
+            textbutton "Сброс":
                 xpos 24
                 ypos 946
                 xsize 366
-                background Solid("#3b2318f5")
-                padding (8, 8)
-                textbutton "Сбросить слои":
-                    action Function(mg_burger.reset_stack, False)
-                    keyboard_focus False
-                    xfill True
-                    text_size 26
-                    text_bold True
-                    text_color "#ffccaa"
-                    text_xalign 0.5
-                    padding (16, 18)
+                action Function(mg_burger.reset_stack, False)
+                keyboard_focus False
+                background Frame("images/ui/round_btn_idle.png", 20, 20)
+                hover_background Frame("images/ui/round_btn_hover.png", 20, 20)
+                text_size 26
+                text_bold True
+                text_color "#ffffff"
+                text_xalign 0.5
+                padding (16, 22)
 
-        # Правая панель: крупные PNG-кнопки ингредиентов под большой палец
+        # Правая скруглённая панель: крупные PNG-кнопки ингредиентов под большой палец
         frame:
             xpos 1430
-            ypos 0
-            xsize 490
-            ysize 1080
-            background Solid("#182028f8")
-            padding (22, 24)
+            ypos 12
+            xsize 478
+            ysize 1056
+            background Frame("images/ui/round_panel.png", 26, 26)
+            padding (18, 22)
 
             vbox:
                 spacing 14
                 xfill True
                 yfill True
 
-                text "ИНГРЕДИЕНТЫ:" size 26 color "#ffcc66" bold True xalign 0.5
+                text "ИНГРЕДИЕНТЫ" size 26 color "#ffffff" bold True xalign 0.5
 
                 $ burger_choices = [k for k, v in mg_burger.LAYERS if v["src"] in mg_burger.stolen and k not in [l["id"] for l in mg_burger.stack] and (mg_burger.falling is None or mg_burger.falling["id"] != k)]
 
                 hbox:
                     box_wrap True
-                    spacing 14
-                    box_wrap_spacing 14
-                    xsize 444
+                    spacing 12
+                    box_wrap_spacing 12
+                    xsize 440
                     xalign 0.5
                     for lid in burger_choices:
                         $ b_info = mg_burger.info(lid)
                         $ is_held = (mg_burger.holding == lid)
                         button:
                             xsize 214
-                            ysize 156
+                            ysize 154
                             action Function(mg_burger.pick, lid)
                             keyboard_focus False
-                            background Solid("#4a3812" if is_held else "#232e3a")
+                            background Frame("images/ui/round_btn_active.png" if is_held else "images/ui/round_btn_idle.png", 18, 18)
+                            hover_background Frame("images/ui/round_btn_hover.png", 18, 18)
                             padding (10, 10)
                             vbox:
                                 xalign 0.5
@@ -906,19 +890,27 @@ screen screen_minigame_burger():
                                     add Transform("images/mg/layer_bun_top.png", size=(150, 62), fit="contain") xalign 0.5
                                 else:
                                     add Transform("images/mg/ingr_" + b_info["src"] + ".png", size=(78, 78), fit="contain") xalign 0.5
-                                text b_info["name"] size 22 bold True color ("#ffe066" if is_held else "#f5e8d8") xalign 0.5
+                                text b_info["name"] size 22 bold True color "#ffffff" xalign 0.5
 
-                if mg_burger.all_ok():
-                    null height 16
-                    frame:
-                        background Solid("#154d2bf8")
-                        xfill True
-                        padding (8, 8)
-                        textbutton "ОТДАТЬ СЕМЁНУ":
-                            action [Function(mg_burger.serve), Return(True)]
-                            xfill True
-                            text_size 30
-                            text_bold True
-                            text_color "#66ff88"
-                            text_xalign 0.5
-                            padding (20, 28)
+        # Полупрозрачная табличка посередине экрана по всей ширине (как в сборке сайта) + переход через 1.5 сек
+        if mg_burger.all_ok():
+            frame:
+                xpos 0
+                yalign 0.5
+                xsize 1920
+                ysize 148
+                background Solid("#082868dc")
+                padding (0, 0)
+
+                vbox:
+                    xsize 1920
+                    yfill True
+                    add Solid("#00e5ff") xsize 1920 ysize 4
+                    text "БУТЕРБРОД СОБРАН ПРАВИЛЬНО!" size 46 color "#ffffff" bold True xalign 0.5 yalign 0.5 text_align 0.5
+                    add Solid("#00e5ff") xsize 1920 ysize 4 yalign 1.0
+
+            button:
+                xsize 1920
+                ysize 1080
+                background None
+                action [Function(mg_burger.serve), Return(True)]

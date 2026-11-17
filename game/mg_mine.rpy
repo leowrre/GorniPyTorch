@@ -356,8 +356,9 @@ init python:
             T = self.TOP
             rv = renpy.Render(self.W, self.H)
             cv = rv.canvas()
-            cv.rect("#120e0b", (0, 0, self.W, self.H))
-            cv.rect("#1d1612", (0, 0, self.W, T - 4))
+            cv.rect("#061433", (0, 0, self.W, self.H))
+            cv.rect("#0b2866", (0, 0, self.W, T - 4))
+            cv.rect("#00d8ff", (0, T - 4, self.W, 4))
 
             r_beton = renpy.render(self.im_beton, C, C, st, at)
             r_dirt_light = renpy.render(self.im_dirt_light, C, C, st, at)
@@ -444,17 +445,12 @@ init python:
                 r_miner = renpy.render(m_frames[m_idx], 92, 92, st, at)
                 rv.blit(r_miner, (cx - 46, cy - 48))
 
-            # Минимальный HUD из цифр
+            # Лаконичный HUD в стиле Persona 3 Reload
             hud = "Заряды: %d / %d      Крысы: %d      Уголь: %d" % (
                 g.MAX_CHARGES - len(g.charges), g.MAX_CHARGES, g.rats_left(), g.rocks_broken)
-            mg_text(rv, hud, self.W // 2, 11, 26, "#ffcc66", True, align=0.5, st=st, at=at)
+            mg_text(rv, hud, self.W // 2, 11, 26, "#ffffff", True, align=0.5, st=st, at=at)
 
-            if g.done:
-                ov = renpy.Render(self.W, self.H)
-                ov.canvas().rect("#000000aa", (0, T, self.W, self.H - T))
-                mg_text(ov, "ПРОЛОМ ОТКРЫТ!", self.W // 2, self.H // 2 - 26, 48, "#66ff99", True, align=0.5, st=st, at=at)
-                rv.blit(ov, (0, 0))
-            else:
+            if not g.done:
                 renpy.redraw(self, 0)
 
             if g.need_refresh:
@@ -500,6 +496,9 @@ default mg_mine = MineBomberGame()
 screen screen_minigame_mine():
     modal True
 
+    if mg_mine.done:
+        timer 1.5 action Return(True)
+
     fixed:
         xsize 1920
         ysize 1080
@@ -511,55 +510,48 @@ screen screen_minigame_mine():
 
         # Центральное поле шахты 1300 x 956
         add MineBomberDisplayable(mg_mine) xpos 310 ypos 52
+        add Transform("images/ui/logo_pgt_white.png", size=(64, 64), fit="contain") xpos 26 ypos 24
 
-        # Слева сверху: кнопка сброса
+        # Слева сверху: скруглённая кнопка сброса в стиле Persona 3 Reload
         if not mg_mine.done:
-            frame:
+            textbutton "Заново":
                 xpos 26
-                ypos 52
+                ypos 106
                 xsize 258
-                background Solid("#261c16f0")
-                padding (8, 8)
-                textbutton "Заново":
-                    action Function(mg_mine.reset)
-                    keyboard_focus False
-                    xfill True
-                    text_size 26
-                    text_bold True
-                    text_xalign 0.5
-                    padding (18, 18)
+                action Function(mg_mine.reset)
+                keyboard_focus False
+                background Frame("images/ui/round_btn_idle.png", 20, 20)
+                hover_background Frame("images/ui/round_btn_hover.png", 20, 20)
+                text_size 26
+                text_bold True
+                text_color "#ffffff"
+                text_xalign 0.5
+                padding (18, 22)
 
-            # Слева снизу под большой палец: виртуальная крестовина D-Pad
+            # Слева снизу: крестовина из FOTOVSTAVIT2
             add MGTouchPad(mg_mine, size=258) xpos 26 ypos 750
 
-            # Справа снизу под правый палец: огромная кнопка закладки заряда
-            frame:
-                xpos 1636
-                ypos 750
-                xsize 258
-                ysize 258
-                background Solid("#5c2214f5")
-                padding (10, 10)
-                button:
-                    action Function(mg_mine.place_charge)
-                    keyboard_focus False
-                    xfill True
-                    yfill True
-                    background Solid("#8a3018")
-                    vbox:
-                        xalign 0.5
-                        yalign 0.5
-                        spacing 8
-                        text "ЗАРЯД" size 34 color "#ffea88" bold True xalign 0.5
+            # Справа снизу: кнопка B из FOTOVSTAVIT2 (затемняется при нажатии)
+            add MGBombButton(mg_mine, size=248) xpos 1640 ypos 755
         else:
+            # Полупрозрачная табличка посередине экрана по всей ширине (как в сборке сайта) + переход через 1.5 сек
             frame:
-                xalign 0.5
-                ypos 955
-                background Solid("#154d2bf8")
-                padding (10, 10)
-                textbutton "ДАЛЕЕ":
-                    action Return(True)
-                    text_size 36
-                    text_bold True
-                    text_color "#66ff88"
-                    padding (68, 20)
+                xpos 0
+                yalign 0.5
+                xsize 1920
+                ysize 148
+                background Solid("#082868dc")
+                padding (0, 0)
+
+                vbox:
+                    xsize 1920
+                    yfill True
+                    add Solid("#00e5ff") xsize 1920 ysize 4
+                    text "ПРОЛОМ ОТКРЫТ!" size 46 color "#ffffff" bold True xalign 0.5 yalign 0.5 text_align 0.5
+                    add Solid("#00e5ff") xsize 1920 ysize 4 yalign 1.0
+
+            button:
+                xsize 1920
+                ysize 1080
+                background None
+                action Return(True)

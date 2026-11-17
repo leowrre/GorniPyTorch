@@ -96,6 +96,8 @@ style frame:
 
 screen say(who, what):
 
+    add Transform("images/ui/logo_pgt_white.png", size=(64, 64), fit="contain") xpos 28 ypos 20
+
     window:
         id "window"
 
@@ -316,10 +318,6 @@ screen navigation():
         if _in_replay:
 
             textbutton _("Завершить повтор") action EndReplay(confirm=True)
-
-        elif not main_menu:
-
-            textbutton _("Главное меню") action MainMenu()
 
         textbutton _("Об игре") action ShowMenu("about")
 

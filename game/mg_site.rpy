@@ -126,7 +126,7 @@ init python:
     class SiteBuilderDisplayable(renpy.Displayable):
         W, H = 1880, 950
         PX, PY = 478, 76
-        SAMPLE = (22, 54, 386, 238)
+        SAMPLE = (22, 86, 386, 206)
         PAL_X, PAL_Y, PAL_W, PAL_H, PAL_STEP = 14, 344, 404, 58, 65
 
         def __init__(self, game, **kwargs):
@@ -177,10 +177,11 @@ init python:
                     mg_text(r, "Версия для слабовидящих", w - 176, 24, 18, "#163a7a", True, align=0.5, st=st, at=at)
                     c.rect("#2557a7", (w - 332, 68, 312, 38))
                     mg_text(r, "Госвеб • Вход через ЕСИА", w - 176, 75, 17, "#d9e8ff", True, align=0.5, st=st, at=at)
-                    mg_text(r, "ГБПОУ «Прокопьевский горнотехнический техникум им. В. П. Романова»",
-                            tx, h // 2 - 34, 24, "#ffffff", True, width=max(120, w - tx - 350), st=st, at=at)
+                    _tw, th = mg_text(r, "ГБПОУ «Прокопьевский горнотехнический техникум им. В. П. Романова»",
+                                      tx, 18, 20, "#ffffff", True, width=max(120, w - tx - 350), st=st, at=at)
+                    sub_y = max(68, 18 + int(th) + 6)
                     mg_text(r, "Министерство образования Кузбасса • Официальный сайт ОО",
-                            tx, h // 2 + 8, 18, "#ffd34d", False, width=max(120, w - tx - 350), st=st, at=at)
+                            tx, sub_y, 17, "#ffd34d", False, width=max(120, w - tx - 350), st=st, at=at)
                 else:
                     mg_text(r, "Шапка ОО + Версия для ОВЗ", tx, h // 2 - 16, 20, "#ffffff", True, width=max(60, w - tx - 14), st=st, at=at)
 
@@ -238,7 +239,7 @@ init python:
             elif pid == "contacts":
                 mg_text(r, "КОНТАКТЫ И ГОСПАБЛИКИ", 20, 14, 22, "#ffffff", True, width=max(60, w - 36), st=st, at=at)
                 mg_text(r, "+7 (384) 666-80-08 • Приёмная: 66-80-20", 20, 56, 19, "#ffffff", False, width=max(60, w - 36), st=st, at=at)
-                mg_text(r, "pgtkromanov@mail.ru • г. Прокопьевск", 20, 94, 19, "#dce8ff", False, width=max(60, w - 36), st=st, at=at)
+                mg_text(r, "pgtkromanov@mail.ru • ул. Шишкина, д. 26", 20, 94, 19, "#dce8ff", False, width=max(60, w - 36), st=st, at=at)
                 if h >= 175:
                     c.rect("#1d3559", (20, 134, max(60, w - 40), 42))
                     mg_text(r, "Официальные сети: ВКонтакте • MAX", 32, 144, 18, "#7fd4ff", True, width=max(50, w - 64), st=st, at=at)
@@ -272,53 +273,56 @@ init python:
         def card_render(self, pid, st, at, highlight=False):
             p = self.game.part(pid)
             r = renpy.Render(self.PAL_W, self.PAL_H)
+            bg_path = "images/ui/round_btn_active.png" if highlight else "images/ui/round_btn_idle.png"
+            bg_key = ("site_card_bg", bg_path, self.PAL_W, self.PAL_H)
+            bg_disp = MGTextCache.cache.get(bg_key)
+            if bg_disp is None:
+                bg_disp = Frame(bg_path, 18, 18)
+                MGTextCache.cache[bg_key] = bg_disp
+            r.blit(renpy.render(bg_disp, self.PAL_W, self.PAL_H, st, at), (0, 0))
             c = r.canvas()
-            c.rect("#ffcc00" if highlight else "#2b3d50", (0, 0, self.PAL_W, self.PAL_H))
-            c.rect("#1b2836", (3, 3, self.PAL_W - 6, self.PAL_H - 6))
-            c.rect(p["color"], (6, 6, 26, self.PAL_H - 12))
-            c.rect("#8899aa", (6, 6, 26, self.PAL_H - 12), 1)
-            mg_text(r, p["title"], 42, self.PAL_H // 2 - 13, 19, "#ffffff", True, width=self.PAL_W - 50, st=st, at=at)
+            cy = self.PAL_H // 2
+            c.circle("#ffffff", (26, cy), 15)
+            c.circle(p["color"], (26, cy), 13)
+            mg_text(r, p["title"], 48, cy - 13, 19, "#ffffff", True, width=self.PAL_W - 58, st=st, at=at)
             return r
 
         def render(self, width, height, st, at):
             g = self.game
             rv = renpy.Render(self.W, self.H)
             cv = rv.canvas()
-            cv.rect("#0f1720", (0, 0, self.W, self.H))
+            cv.rect("#061638", (0, 0, self.W, self.H))
 
-            # --- Образец макета «Госвеб» слева сверху ---
-            cv.rect("#18232f", (10, 8, 412, 298))
-            cv.rect("#ffcc33", (10, 8, 412, 298), 3)
+            # --- Образец макета слева сверху ---
+            cv.rect("#0b265c", (10, 8, 412, 298))
+            cv.rect("#00d8ff", (10, 8, 412, 298), 3)
+            mg_text(rv, "МАКЕТ САЙТА", 232, 24, 24, "#ffffff", True, align=0.5, st=st, at=at)
             sx, sy, sw, sh = self.SAMPLE
             kx = sw / float(g.PAGE_W)
             ky = sh / float(g.PAGE_H)
-            cv.rect("#f4f6f9", (sx, sy, sw, sh))
+            cv.rect("#f4f8ff", (sx, sy - 20, sw, sh + 20))
             for s in g.SLOTS:
                 x, y, w, h = s["rect"]
                 p = g.part(s["need"])
-                rx, ry = int(sx + x * kx), int(sy + y * ky)
+                rx, ry = int(sx + x * kx), int((sy - 20) + y * ky)
                 rw, rh = max(3, int(w * kx)), max(3, int(h * ky))
                 cv.rect(p["color"], (rx, ry, rw, rh))
                 lc = "#5c6f86" if s["need"] in ("news", "banner") else "#ffffff"
                 for li in range(min(3, max(1, rh // 12))):
                     cv.line(lc, (rx + 6, ry + 6 + li * 8), (rx + int(rw * 0.62), ry + 6 + li * 8), 2)
-            mg_text(rv, "МАКЕТ ПО ГОСТУ (ГОСВЕБ)", 216, 15, 21, "#ffcc33", True, align=0.5, st=st, at=at)
 
-            # --- Крупные карточки деталей под палец ---
-            mg_text(rv, "КОМПОНЕНТЫ САЙТА:", 16, 312, 21, "#66ccff", True, st=st, at=at)
+            # --- Крупные карточки деталей ---
             for i, pid in enumerate(self.palette_items()):
                 rv.blit(self.card_render(pid, st, at), (self.PAL_X, self.PAL_Y + i * self.PAL_STEP))
 
             # --- Полноэкранное окно браузера ---
-            cv.rect("#c4ccd6", (442, 0, 1438, 950))
-            cv.circle("#ff5f57", (472, 30), 10)
-            cv.circle("#febc2e", (504, 30), 10)
-            cv.circle("#28c840", (536, 30), 10)
+            cv.rect("#dcebff", (442, 0, 1438, 950))
+            cv.circle("#00c8ff", (472, 30), 10)
+            cv.circle("#1864d8", (504, 30), 10)
+            cv.circle("#ffffff", (536, 30), 10)
             cv.rect("#ffffff", (570, 12, 930, 38))
-            mg_text(rv, "https://pgt.kemobl.ru/  •  Госвеб Кузбасс", 588, 17, 21, "#1e3a5f", True, st=st, at=at)
-            if g.published:
-                mg_text(rv, "ГОСТ ПРОЙДЕН", 1858, 17, 22, "#13803d", True, align=1.0, st=st, at=at)
-            cv.rect("#f4f6f9", (458, 60, 1406, 876))
+            mg_text(rv, "pgt.kemobl.ru", 588, 17, 21, "#0a2c6e", True, st=st, at=at)
+            cv.rect("#f4f8ff", (458, 60, 1406, 876))
 
             hover_slot = self.slot_at(*g.drag_pos) if g.held else None
             for s in g.SLOTS:
@@ -328,15 +332,13 @@ init python:
                 if pid:
                     self.blit_clipped(rv, self.part_render(pid, w, h, st, at), w, h, (ax, ay))
                 else:
-                    cv.rect("#e4eaf2", (ax, ay, w, h))
-                    cv.rect("#8ea0b5", (ax, ay, w, h), 2)
-                    mg_text(rv, s["hint"], ax + w // 2, ay + h // 2 - 12, 20, "#5c7087", True,
-                            width=max(80, w - 24), align=0.5, st=st, at=at)
+                    cv.rect("#e2eefc", (ax, ay, w, h))
+                    cv.rect("#38a8ff", (ax, ay, w, h), 2)
                     if g.held:
-                        cv.rect("#ffaa00", (ax + 2, ay + 2, w - 4, h - 4), 3)
+                        cv.rect("#00d8ff", (ax + 2, ay + 2, w - 4, h - 4), 3)
                 if hover_slot == s["id"]:
                     top = renpy.Render(w, h)
-                    top.canvas().rect("#ffcc00", (0, 0, w, h), 6)
+                    top.canvas().rect("#00d8ff", (0, 0, w, h), 6)
                     rv.blit(top, (ax, ay))
 
             # --- Деталь в руке ---
@@ -419,12 +421,16 @@ screen screen_minigame_site():
 
     $ site_filled = mg_site.filled_count()
 
+    if mg_site.published:
+        timer 1.5 action Return(True)
+
     fixed:
         xsize 1920
         ysize 1080
 
-        add Solid("#0b1219")
+        add Solid("#05102a")
         add SiteBuilderDisplayable(mg_site) xpos 20 ypos 14
+        add Transform("images/ui/logo_pgt_white.png", size=(48, 48), fit="contain") xpos 44 ypos 26
 
         hbox:
             xpos 24
@@ -433,77 +439,83 @@ screen screen_minigame_site():
             spacing 30
 
             frame:
-                background Solid("#162330f2")
+                background Frame("images/ui/round_panel.png", 20, 20)
                 yalign 0.5
-                padding (26, 14)
-                text "Разделы по ГОСТу: [site_filled] / 7" size 28 color ("#66ff88" if site_filled == 7 else "#ffcc66") bold True
+                padding (28, 14)
+                text "[site_filled] / 7" size 28 color ("#7ae8ff" if site_filled == 7 else "#ffffff") bold True
 
-            hbox:
-                xalign 1.0
-                spacing 24
-                if not mg_site.published:
-                    frame:
-                        background Solid("#1f2e3ef2")
-                        padding (6, 6)
-                        textbutton "Очистить":
-                            action Function(mg_site.reset)
-                            text_size 26
-                            text_bold True
-                            padding (28, 14)
-                    frame:
-                        background Solid("#1b5234f5" if site_filled == 7 else "#253444f2")
-                        padding (6, 6)
-                        textbutton "ОПУБЛИКОВАТЬ САЙТ":
-                            action Function(mg_site.publish)
-                            text_size 28
-                            text_bold True
-                            text_color ("#66ff88" if site_filled == 7 else "#cccccc")
-                            padding (38, 14)
-                else:
-                    frame:
-                        background Solid("#164a2af5")
-                        padding (6, 6)
-                        textbutton "ГОТОВО":
-                            action Return(True)
-                            text_size 32
-                            text_bold True
-                            text_color "#66ff88"
-                            padding (52, 14)
+            if not mg_site.published:
+                hbox:
+                    xalign 1.0
+                    yalign 0.5
+                    spacing 24
+                    textbutton "Очистить":
+                        action Function(mg_site.reset)
+                        background Frame("images/ui/round_btn_idle.png", 18, 18)
+                        hover_background Frame("images/ui/round_btn_hover.png", 18, 18)
+                        text_size 26
+                        text_bold True
+                        text_color "#ffffff"
+                        padding (32, 16)
+                    textbutton "СОБРАТЬ САЙТ":
+                        action Function(mg_site.publish)
+                        background Frame("images/ui/round_mg_green.png" if site_filled == 7 else "images/ui/round_btn_idle.png", 18, 18)
+                        hover_background Frame("images/ui/round_mg_green_hover.png" if site_filled == 7 else "images/ui/round_btn_hover.png", 18, 18)
+                        text_size 28
+                        text_bold True
+                        text_color "#ffffff"
+                        padding (42, 16)
 
-        # Всплывающее окно при неправильной сборке сайта («Дизайн не подошёл!»)
+        # Полупрозрачная табличка посередине экрана по всей ширине до краёв, если сайт собран правильно
+        if mg_site.published:
+            frame:
+                xpos 0
+                yalign 0.5
+                xsize 1920
+                ysize 148
+                background Solid("#082868dc")
+                padding (0, 0)
+
+                vbox:
+                    xsize 1920
+                    yfill True
+                    add Solid("#00e5ff") xsize 1920 ysize 4
+                    text "САЙТ СОБРАН ПРАВИЛЬНО!" size 46 color "#ffffff" bold True xalign 0.5 yalign 0.5 text_align 0.5
+                    add Solid("#00e5ff") xsize 1920 ysize 4 yalign 1.0
+
+            button:
+                xsize 1920
+                ysize 1080
+                background None
+                action Return(True)
+
+        # Всплывающее скруглённое окно при неправильной сборке сайта
         if mg_site.popup_open:
             button:
                 xfill True
                 yfill True
-                background Solid("#000000aa")
+                background Solid("#030a1cbb")
                 action Function(mg_site.close_popup)
 
             frame:
                 xalign 0.5
                 yalign 0.5
-                xsize 920
-                background Solid("#3d161cf7")
-                padding (6, 6)
+                xsize 680
+                background Frame("images/ui/round_mg_red_modal.png", 28, 28)
+                padding (46, 38)
 
-                frame:
-                    xfill True
-                    background Solid("#1b1318fa")
-                    padding (44, 36)
+                vbox:
+                    spacing 26
+                    xalign 0.5
 
-                    vbox:
-                        spacing 22
+                    text "ОШИБКА СБОРКИ" size 38 color "#7ae8ff" bold True xalign 0.5 text_align 0.5
+
+                    textbutton "ОК":
                         xalign 0.5
-
-                        text mg_site.popup_title size 36 color "#ff6666" bold True xalign 0.5 text_align 0.5
-                        text mg_site.popup_text size 24 color "#f0e6e8" xalign 0.5 text_align 0.5 line_spacing 6
-
-                        frame:
-                            xalign 0.5
-                            background Solid("#8c2632")
-                            padding (4, 4)
-                            textbutton "Понятно, исправлю по ГОСТу!":
-                                action Function(mg_site.close_popup)
-                                text_size 26
-                                text_bold True
-                                text_color "#ffffff"
-                                padding (44, 14)
+                        action Function(mg_site.close_popup)
+                        background Frame("images/ui/round_mg_red_btn.png", 18, 18)
+                        hover_background Frame("images/ui/round_mg_red_btn_hover.png", 18, 18)
+                        text_size 28
+                        text_bold True
+                        text_color "#ffffff"
+                        padding (56, 16)

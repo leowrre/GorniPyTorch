@@ -204,13 +204,13 @@ init python:
             rv = renpy.Render(S, S)
             board = renpy.Render(S, S)
             cv = board.canvas()
-            cv.rect("#10161f", (0, 0, S, S))
-            cv.rect("#2b3a4f", (3, 3, S - 6, S - 6), 4)
+            cv.rect("#07183d", (0, 0, S, S))
+            cv.rect("#00d8ff", (3, 3, S - 6, S - 6), 4)
             for r in range(g.N):
                 for c in range(g.N):
                     x0, y0 = self.M + c * self.CELL, self.M + r * self.CELL
-                    cv.rect("#16202c", (x0 + 3, y0 + 3, self.CELL - 6, self.CELL - 6), 1)
-                    cv.circle("#223042", self.center((r, c)), 9)
+                    cv.rect("#0d2864", (x0 + 3, y0 + 3, self.CELL - 6, self.CELL - 6), 1)
+                    cv.circle("#1c4ca8", self.center((r, c)), 9)
 
             # Провода
             for k in g.ORDER:
@@ -219,7 +219,7 @@ init python:
                 if len(p) >= 2:
                     pts = [self.center(cell) for cell in p]
                     for i in range(len(pts) - 1):
-                        cv.line("#05080c", pts[i], pts[i + 1], 42)
+                        cv.line("#040b1c", pts[i], pts[i + 1], 42)
                     for i in range(len(pts) - 1):
                         cv.line(col, pts[i], pts[i + 1], 26)
                     for pt in pts:
@@ -230,7 +230,7 @@ init python:
                 col = g.PHASES[k]["col"]
                 for cell in cps:
                     cx, cy = self.center(cell)
-                    cv.polygon("#05080c", mg_pts([(cx, cy - 40), (cx + 40, cy), (cx, cy + 40), (cx - 40, cy)]))
+                    cv.polygon("#040b1c", mg_pts([(cx, cy - 40), (cx + 40, cy), (cx, cy + 40), (cx - 40, cy)]))
                     dia = mg_pts([(cx, cy - 33), (cx + 33, cy), (cx, cy + 33), (cx - 33, cy)])
                     cv.polygon(col, dia, 0 if cell in g.paths[k] else 6)
 
@@ -239,9 +239,9 @@ init python:
                 col = g.PHASES[k]["col"]
                 for cell in terms:
                     cx, cy = self.center(cell)
-                    cv.circle("#05080c", (cx, cy), 52)
+                    cv.circle("#040b1c", (cx, cy), 52)
                     cv.circle(col, (cx, cy), 46)
-                    cv.circle("#141b26", (cx, cy), 29)
+                    cv.circle("#091e4a", (cx, cy), 29)
                     mg_text(board, k, cx, cy - 21, 36, col, True, align=0.5, st=st, at=at)
 
             ox, oy = 0, 0
@@ -260,17 +260,16 @@ init python:
                     while pts[-1][1] < S:
                         pts.append((pts[-1][0] + random.randint(-65, 65), pts[-1][1] + random.randint(45, 95)))
                     fc.lines("#ffffff", False, mg_pts(pts), 6)
-                    fc.lines("#3399ff", False, mg_pts(pts), 3)
-                mg_text(fx, "КЗ!", S // 2, S // 2 - 42, 68, "#0b2a66", True, align=0.5, st=st, at=at)
+                    fc.lines("#00d8ff", False, mg_pts(pts), 3)
+                mg_text(fx, "КЗ!", S // 2, S // 2 - 42, 68, "#071844", True, align=0.5, st=st, at=at)
                 rv.blit(fx, (0, 0))
                 renpy.redraw(self, 0)
 
             # Пока нет подписи в журнале — щит закрыт
             if not g.tb_signed:
                 ov = renpy.Render(S, S)
-                ov.canvas().rect("#000000c8", (0, 0, S, S))
-                mg_text(ov, "ДОПУСК ЗАКРЫТ", S // 2, S // 2 - 52, 42, "#ffcc00", True, align=0.5, st=st, at=at)
-                mg_text(ov, "Распишитесь справа", S // 2, S // 2 + 12, 28, "#ffffff", True, align=0.5, st=st, at=at)
+                ov.canvas().rect("#05122ed8", (0, 0, S, S))
+                mg_text(ov, "ДОПУСК ЗАКРЫТ", S // 2, S // 2 - 24, 44, "#00e5ff", True, align=0.5, st=st, at=at)
                 rv.blit(ov, (0, 0))
             return rv
 
@@ -312,93 +311,97 @@ screen screen_minigame_wiring():
 
     $ wires_ok = mg_wiring.complete_count()
 
+    if wires_ok >= 4:
+        timer 1.5 action Return(True)
+
     fixed:
         xsize 1920
         ysize 1080
 
-        add Solid("#090d16")
+        add Solid("#05102a")
+        add Transform("images/ui/logo_pgt_white.png", size=(64, 64), fit="contain") xpos 22 ypos 44
 
-        add WiringDisplayable(mg_wiring) xpos 44 ypos 44
+        add WiringDisplayable(mg_wiring) xpos 104 ypos 44
 
-        # Правая панель: краткий журнал ТБ + статус + крупные кнопки
+        # Правая скруглённая панель с исходным расположением элементов без переполнения
         frame:
-            xpos 1076
+            xpos 1116
             ypos 44
-            xsize 800
+            xsize 768
             ysize 992
-            background Solid("#1c1a12f5")
+            background Frame("images/ui/round_wiring_panel.png", 26, 26)
             padding (36, 32)
 
             vbox:
                 spacing 24
                 xfill True
-                yfill True
 
-                text "ТЕХНИКА БЕЗОПАСНОСТИ" size 32 color "#ffcc00" bold True xalign 0.5
+                text "ТЕХНИКА БЕЗОПАСНОСТИ" size 32 color "#ffffff" bold True xalign 0.5
 
                 frame:
-                    background Solid("#282314")
+                    background Frame("images/ui/round_wiring_sub.png", 20, 20)
                     xfill True
                     padding (24, 20)
                     vbox:
                         spacing 14
-                        text "1. Соединить одноимённые клеммы (A, B, C, N)" size 23 color "#f5ebd2"
-                        text "2. Пройти через все свои контрольные ромбы" size 23 color "#88ddff" bold True
-                        text "3. Не пересекать провода!" size 23 color "#ff9988" bold True
+                        text "1. Соединить одноимённые клеммы (A, B, C, N)" size 23 color "#ffffff"
+                        text "2. Пройти через свои ромбы" size 23 color "#7ae8ff" bold True
+                        text "3. Не пересекать провода" size 23 color "#ffffff" bold True
 
-                if not mg_wiring.tb_signed:
-                    frame:
-                        background Solid("#4a3808")
+                # Функциональная текстовая строка росписи с чекбоксом справа (хитбокс — всё пространство между блоками)
+                button:
+                    xfill True
+                    ysize 110
+                    background None
+                    hover_background None
+                    action Function(mg_wiring.sign)
+                    padding (8, 0)
+
+                    fixed:
                         xfill True
-                        padding (8, 8)
-                        textbutton "РАСПИСАТЬСЯ В ЖУРНАЛЕ":
-                            action Function(mg_wiring.sign)
-                            xfill True
-                            text_size 28
-                            text_bold True
-                            text_color "#ffea66"
-                            text_xalign 0.5
-                            padding (24, 26)
-                else:
-                    frame:
-                        background Solid("#143320")
-                        xfill True
-                        padding (22, 18)
-                        text "ДОПУСК ПОЛУЧЕН" size 26 color "#66ff88" bold True xalign 0.5
+                        ysize 110
+                        text "Расписаться в журнале" size 30 bold True color ("#7ae8ff" if mg_wiring.tb_signed else "#ffffff") xalign 0.0 yalign 0.5
+                        add Transform("images/ui/p3_checkbox_checked.png" if mg_wiring.tb_signed else "images/ui/p3_checkbox_empty.png", size=(58, 58), fit="contain") xalign 1.0 yalign 0.5
 
                 frame:
-                    background Solid("#121822")
+                    background Frame("images/ui/round_panel.png", 22, 22)
                     xfill True
                     padding (26, 22)
-                    vbox:
-                        spacing 14
-                        text "Цепи: [wires_ok] / 4" size 32 color ("#66ff88" if wires_ok == 4 else "#ffdd66") bold True
-                        text "Разряды: [mg_wiring.shocks]" size 26 color "#ff8866" bold True
+                    text "Цепи: [wires_ok] / 4" size 32 color ("#7ae8ff" if wires_ok == 4 else "#ffffff") bold True xalign 0.5
 
                 null height 20
 
                 if wires_ok < 4:
-                    frame:
-                        background Solid("#222d3d")
+                    textbutton "Сброс":
+                        action Function(mg_wiring.clear_wires)
                         xfill True
-                        padding (8, 8)
-                        textbutton "Снять провода":
-                            action Function(mg_wiring.clear_wires)
-                            xfill True
-                            text_size 28
-                            text_bold True
-                            text_xalign 0.5
-                            padding (24, 22)
-                else:
-                    frame:
-                        background Solid("#154d2b")
-                        xfill True
-                        padding (8, 8)
-                        textbutton "ВКЛЮЧИТЬ СВЕТ":
-                            action Return(True)
-                            xfill True
-                            text_size 32
-                            text_bold True
-                            text_color "#66ff88"
-                            text_xalign 0.5
-                            padding (24, 26)
+                        background Frame("images/ui/round_btn_idle.png", 20, 20)
+                        hover_background Frame("images/ui/round_btn_hover.png", 20, 20)
+                        text_size 28
+                        text_bold True
+                        text_color "#ffffff"
+                        text_xalign 0.5
+                        padding (24, 22)
+
+        # Полупрозрачная табличка посередине экрана по всей ширине (как у сайта) + переход через 1.5 сек
+        if wires_ok >= 4:
+            frame:
+                xpos 0
+                yalign 0.5
+                xsize 1920
+                ysize 148
+                background Solid("#082868dc")
+                padding (0, 0)
+
+                vbox:
+                    xsize 1920
+                    yfill True
+                    add Solid("#00e5ff") xsize 1920 ysize 4
+                    text "КОММУТАЦИЯ ЭЛЕКТРИЧЕСКИХ ЦЕПЕЙ ВЫПОЛНЕНА УСПЕШНО!" size 42 color "#ffffff" bold True xalign 0.5 yalign 0.5 text_align 0.5
+                    add Solid("#00e5ff") xsize 1920 ysize 4 yalign 1.0
+
+            button:
+                xsize 1920
+                ysize 1080
+                background None
+                action Return(True)

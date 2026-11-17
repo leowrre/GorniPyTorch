@@ -159,14 +159,7 @@ init python:
             ui = renpy.Render(self.width, self.height)
             canvas = ui.canvas()
 
-            if self.game.status == "success":
-                canvas.rect("#103822cc", (0, 0, self.width, 130))
-            elif self.game.flash_timer > 0 and self.game.status == "fail":
-                canvas.rect("#4a1218dd", (0, 0, self.width, 130))
-            else:
-                canvas.rect("#101a24cc", (0, 0, self.width, 130))
-
-            # Левая и правая тумбы турникета
+            # Левая и правая тумбы турникета (исходные цвета)
             canvas.rect("#2c3c4cd8", (170, 210, 380, 660))
             canvas.rect("#4a627a", (170, 210, 380, 660), 5)
             canvas.rect("#394d60", (190, 210, 340, 44))
@@ -181,10 +174,10 @@ init python:
                 canvas.rect("#1e5938", (550, 280, 58, 500))
                 canvas.rect("#1e5938", (1312, 280, 58, 500))
                 canvas.circle("#44ff77", (960, 520), 115)
-                canvas.circle("#0f1e18", (960, 520), 92)
-                canvas.line("#44ff77", (960, 585), (960, 455), 16)
-                canvas.line("#44ff77", (905, 510), (960, 450), 16)
-                canvas.line("#44ff77", (1015, 510), (960, 450), 16)
+                canvas.circle("#133a24", (960, 520), 92)
+                canvas.line("#ffffff", (960, 585), (960, 455), 16)
+                canvas.line("#ffffff", (905, 510), (960, 450), 16)
+                canvas.line("#ffffff", (1015, 510), (960, 450), 16)
             else:
                 flap_col = "#1f6b3dcc" if is_green else "#752028cc"
                 border_col = "#55ff88" if is_green else "#ff5555"
@@ -194,39 +187,39 @@ init python:
                 canvas.polygon(border_col, [(1370, 275), (978, 345), (978, 715), (1370, 775)], 5)
 
             # Светофор-индикатор на левой тумбе
-            canvas.rect("#141c24", (255, 290, 210, 460))
-            canvas.rect("#324456", (255, 290, 210, 460), 3)
+            canvas.rect("#111921", (255, 290, 210, 460))
+            canvas.rect("#53687e", (255, 290, 210, 460), 3)
 
             if not is_green:
-                canvas.circle("#5c1111", (360, 415), 78)
+                canvas.circle("#6b1515", (360, 415), 78)
                 canvas.circle("#ff3333", (360, 415), 60)
                 canvas.circle("#ffaaaa", (342, 396), 18)
             else:
-                canvas.circle("#2a1212", (360, 415), 56)
+                canvas.circle("#2e1818", (360, 415), 56)
 
             if is_green:
-                canvas.circle("#115c24", (360, 625), 78)
+                canvas.circle("#145e28", (360, 625), 78)
                 canvas.circle("#33ff66", (360, 625), 60)
-                canvas.circle("#ccffdd", (342, 606), 18)
+                canvas.circle("#b8ffcc", (342, 606), 18)
             else:
-                canvas.circle("#122a18", (360, 625), 56)
+                canvas.circle("#162c1e", (360, 625), 56)
 
             # Считыватель пропуска на правой тумбе
-            canvas.rect("#141e28", (1430, 290, 260, 460))
-            canvas.rect("#55ff88" if is_green else "#ff5555", (1430, 290, 260, 460), 4)
-            canvas.circle("#223446", (1560, 470), 74)
-            canvas.circle("#55ff88" if is_green else "#ff5555", (1560, 470), 74, 4)
-            canvas.circle("#55ff88" if is_green else "#ff5555", (1560, 470), 42, 3)
-            canvas.circle("#55ff88" if is_green else "#ff5555", (1560, 470), 14)
+            canvas.rect("#16202a", (1430, 290, 260, 460))
+            canvas.rect("#44ff88" if is_green else "#3a88cc", (1430, 290, 260, 460), 4)
+            canvas.circle("#223242", (1560, 470), 74)
+            canvas.circle("#66ff99" if is_green else "#66ccff", (1560, 470), 74, 4)
+            canvas.circle("#66ff99" if is_green else "#66ccff", (1560, 470), 42, 3)
+            canvas.circle("#66ff99" if is_green else "#66ccff", (1560, 470), 14)
 
             cx = int(1340 + self.game.card_anim_x * 165)
             cy = int(595 - self.game.card_anim_x * 115)
-            canvas.rect("#091017", (cx + 8, cy + 10, 190, 118))
-            canvas.rect("#eaf4ff", (cx, cy, 190, 118))
-            canvas.rect("#1f5fb8", (cx, cy + 16, 190, 26))
-            canvas.rect("#9ab4cf", (cx + 20, cy + 62, 110, 12))
-            canvas.rect("#9ab4cf", (cx + 20, cy + 84, 75, 10))
-            canvas.rect("#2c3e50", (cx, cy, 190, 118), 3)
+            canvas.rect("#0b1015", (cx + 8, cy + 10, 190, 118))
+            canvas.rect("#e8f1f8", (cx, cy, 190, 118))
+            canvas.rect("#1d5fa8", (cx, cy + 16, 190, 26))
+            canvas.rect("#8ca0b5", (cx + 20, cy + 62, 110, 12))
+            canvas.rect("#8ca0b5", (cx + 20, cy + 84, 75, 10))
+            canvas.rect("#336699", (cx, cy, 190, 118), 3)
 
             cyc = self.game.cycle_progress()
             for idx in range(14):
@@ -312,10 +305,8 @@ init python:
 
         def sung_preview(self):
             if not self.collected_words:
-                return "Ловите правильные строки куплета и уворачивайтесь от фальшивых слов!"
-            # Показываем последние собранные строки куплета
-            tail = self.collected_words[-4:]
-            return " ".join(tail)
+                return "Собранный текст появится здесь..."
+            return " ".join(self.collected_words)
 
         def move_player(self, dx):
             if not self.is_finished():
@@ -618,9 +609,6 @@ init python:
                 canvas.circle("#525e6c", (cx, cy), 20)
                 canvas.circle("#15181c", (cx, cy), 8)
 
-            mg_text(rv, "ШАБЛОН ОТК: ПРОВАРИТЬ КОНТУР «ПГТ» БЕЗ ОТРЫВА И ПРОЖОГОВ",
-                    self.width // 2, 28, 22, "#9ab0c6", True, align=0.5, st=st, at=at)
-
             # Фрезерованные разделки кромок под буквы «П», «Г», «Т»
             for s_i, stroke in enumerate(g.strokes):
                 is_cur_stroke = (s_i == g.stroke_idx and not g.is_all_welded())
@@ -669,9 +657,6 @@ init python:
                     sx = cx + random.randint(-52, 52)
                     sy = cy + random.randint(-52, 52)
                     canvas.line("#ffea66", (cx, cy), (sx, sy), 3)
-
-            # Подсказка/предупреждение мастера снизу плиты
-            mg_text(rv, g.status_msg, self.width // 2, self.height - 46, 22, g.status_col, True, align=0.5, st=st, at=at)
 
             if not g.is_all_welded() and not g.failed:
                 renpy.redraw(self, 0.05)
@@ -1335,6 +1320,52 @@ default career_summary = None
 ## ==============================================================================
 
 # ------------------------------------------------------------------------------
+# ВСПЛЫВАЮЩЕЕ ОКНО ПЕРЕД МИНИ-ИГРАМИ (МИНИМАЛИЗМ + СТИЛЬ PERSONA 3 RELOAD)
+# ------------------------------------------------------------------------------
+screen screen_mg_intro(title_txt, desc_txt):
+    modal True
+
+    key "dismiss" action Return(True)
+    key "K_SPACE" action Return(True)
+    key "K_RETURN" action Return(True)
+
+    fixed:
+        xsize 1920
+        ysize 1080
+
+        button:
+            xsize 1920
+            ysize 1080
+            background Solid("#040c20cc")
+            action Return(True)
+
+        add Transform("images/ui/logo_pgt_white.png", size=(64, 64), fit="contain") xpos 28 ypos 20
+
+        frame:
+            xalign 0.5
+            yalign 0.5
+            xsize 760
+            background Frame("images/ui/round_outer_bg.png", 28, 28)
+            padding (48, 40)
+
+            vbox:
+                spacing 24
+                xfill True
+
+                text title_txt size 34 color "#7ae8ff" bold True xalign 0.5 text_align 0.5
+                text desc_txt size 24 color "#ffffff" xalign 0.5 text_align 0.5 line_spacing 6
+
+                textbutton "Начать":
+                    xalign 0.5
+                    action Return(True)
+                    background Frame("images/ui/round_btn_active.png", 18, 18)
+                    hover_background Frame("images/ui/round_btn_hover.png", 18, 18)
+                    padding (54, 16)
+                    text_size 26
+                    text_bold True
+                    text_color "#ffffff"
+
+# ------------------------------------------------------------------------------
 # ЭКРАН 1: ТУРНИКЕТ
 # ------------------------------------------------------------------------------
 screen screen_minigame_turnstile():
@@ -1345,6 +1376,7 @@ screen screen_minigame_turnstile():
         key "K_SPACE" action Function(mg_turnstile.swipe)
         key "K_RETURN" action Function(mg_turnstile.swipe)
     else:
+        timer 1.5 action Return(True)
         key "K_SPACE" action Return(True)
         key "K_RETURN" action Return(True)
 
@@ -1353,40 +1385,19 @@ screen screen_minigame_turnstile():
         ysize 1080
 
         add TurnstileDisplayable(mg_turnstile)
-
-        if mg_turnstile.status == "success":
-            text "ПРОХОД ОТКРЫТ" size 42 color "#66ff88" bold True xalign 0.5 ypos 40
-        elif mg_turnstile.light == "green":
-            text "ЖМИ НА ЭКРАН!" size 42 color "#66ff88" bold True xalign 0.5 ypos 40
-        elif mg_turnstile.flash_timer > 0 and mg_turnstile.status == "fail":
-            text "РАНО!" size 42 color "#ff6666" bold True xalign 0.5 ypos 40
-        else:
-            text "ЖДИ ЗЕЛЁНЫЙ..." size 38 color "#ff6666" bold True xalign 0.5 ypos 42
-
-        if mg_turnstile.status == "success":
-            frame:
-                xalign 0.5
-                ypos 785
-                background Solid("#144729f2")
-                padding (8, 8)
-                textbutton "ВОЙТИ":
-                    action Return(True)
-                    text_size 36
-                    text_bold True
-                    text_color "#ffffff"
-                    padding (60, 22)
+        add Transform("images/ui/logo_pgt_white.png", size=(64, 64), fit="contain") xpos 28 ypos 20
 
         if mg_turnstile.status != "success" and mg_turnstile.attempts >= 3:
-            frame:
+            textbutton "Пропустить":
                 xalign 0.97
                 ypos 28
-                background Solid("#1d2b3aee")
-                padding (6, 6)
-                textbutton "Пропустить":
-                    action [SetField(mg_turnstile, "skipped", True), SetField(mg_turnstile, "status", "success"), Return(True)]
-                    text_size 24
-                    text_color "#ffd966"
-                    padding (24, 14)
+                action [SetField(mg_turnstile, "skipped", True), SetField(mg_turnstile, "status", "success"), Return(True)]
+                background Frame("images/ui/round_btn_idle.png", 18, 18)
+                hover_background Frame("images/ui/round_btn_hover.png", 18, 18)
+                text_size 24
+                text_bold True
+                text_color "#ffffff"
+                padding (28, 16)
 
 # ------------------------------------------------------------------------------
 # ЭКРАН 3: АКТОВЫЙ ЗАЛ (ОСМЫСЛЕННЫЙ КУПЛЕТ ПЕСНИ + ПЕНАЛЬТИ ЗА ФАЛЬШЬ)
@@ -1396,6 +1407,8 @@ screen screen_minigame_vocal():
 
     if not mg_vocal.is_finished():
         timer 0.04 action Function(mg_vocal.update_tick) repeat True
+    else:
+        timer 1.5 action Return(True)
 
     key "K_LEFT" action Function(mg_vocal.move_player, -0.055)
     key "K_RIGHT" action Function(mg_vocal.move_player, 0.055)
@@ -1418,16 +1431,16 @@ screen screen_minigame_vocal():
         if not mg_vocal.is_finished():
             for item in mg_vocal.falling_words:
                 frame:
-                    background Solid("#4a1b6de8")
+                    background Frame("images/ui/round_vocal_word.png", 18, 18)
                     xpos int(item["x"] * 1920)
                     xanchor 0.5
                     ypos int(item["y"] * 855)
                     yanchor 0.5
-                    padding (22, 10)
-                    text item["word"] size 28 color "#ffea75" bold True
+                    padding (24, 12)
+                    text item["word"] size 28 color "#ffffff" bold True
 
             for pop in mg_vocal.popups:
-                text pop["text"] size 32 color pop.get("col", "#66ffff") bold True xpos int(pop["x"] * 1920) xanchor 0.5 ypos int(pop["y"] * 855)
+                text pop["text"] size 32 color "#7ae8ff" bold True xpos int(pop["x"] * 1920) xanchor 0.5 ypos int(pop["y"] * 855)
 
         $ singer_bob = int(abs(math.sin(mg_vocal.step_phase)) * 10) if not mg_vocal.is_finished() else 0
         add Transform("images/mg/schoolboy_singer.png", size=(184, 260), fit="contain", xzoom=(-1.0 if mg_vocal.facing < 0 else 1.0)):
@@ -1437,38 +1450,49 @@ screen screen_minigame_vocal():
             yanchor 1.0
 
         add "images/mg/vocal_stage_fg.png"
+        add Transform("images/ui/logo_pgt_white.png", size=(64, 64), fit="contain") xpos 28 ypos 20
 
-        # Телесуфлёр куплета гимна ПГТ + счётчик штрафов сверху
+        # Лаконичный скруглённый телесуфлёр в стиле Persona 3 Reload с общим собранным текстом
         frame:
             xalign 0.5
             ypos 16
-            xsize 1560
-            background Solid("#160e24eb")
-            padding (26, 12)
+            xsize 1320
+            background Frame("images/ui/round_vocal_hud.png", 22, 22)
+            padding (32, 14)
             vbox:
-                spacing 6
+                spacing 8
                 xfill True
                 fixed:
                     xfill True
-                    ysize 34
-                    text "Куплет гимна ПГТ: [len(mg_vocal.collected_words)] / [mg_vocal.target_count]" size 25 color "#ffea75" bold True xalign 0.0 yalign 0.5
+                    ysize 36
+                    text "[len(mg_vocal.collected_words)] / [mg_vocal.target_count]" size 25 color "#7ae8ff" bold True xalign 0.0 yalign 0.5
                     if not mg_vocal.is_finished():
-                        text ("Следующая фраза: «" + mg_vocal.current_target_phrase() + "»") size 23 color "#7fe7ff" bold True xalign 0.52 yalign 0.5
-                    text "Штрафы: [mg_vocal.mistakes]" size 25 color ("#ff6666" if mg_vocal.mistakes > 0 else "#9ab8cc") bold True xalign 1.0 yalign 0.5
-                text mg_vocal.sung_preview() size 22 color "#e8def8" xalign 0.5 text_align 0.5
+                        text ("«" + mg_vocal.current_target_phrase() + "»") size 27 color "#ffffff" bold True xalign 0.5 yalign 0.5
+                    text "Штрафы: [mg_vocal.mistakes]" size 24 color "#ffffff" bold True xalign 1.0 yalign 0.5
+                text mg_vocal.sung_preview() size 21 color "#b8e6ff" xalign 0.5 text_align 0.5
 
+        # Полупрозрачная табличка посередине экрана по всей ширине (как в сборке сайта)
         if mg_vocal.is_finished():
             frame:
-                xalign 0.5
+                xpos 0
                 yalign 0.5
-                background Solid("#162e20f2")
-                padding (12, 12)
-                textbutton "ЗАВЕРШИТЬ КУПЛЕТ":
-                    action Return(True)
-                    text_size 38
-                    text_bold True
-                    text_color "#66ff88"
-                    padding (64, 26)
+                xsize 1920
+                ysize 148
+                background Solid("#082868dc")
+                padding (0, 0)
+
+                vbox:
+                    xsize 1920
+                    yfill True
+                    add Solid("#00e5ff") xsize 1920 ysize 4
+                    text "ГИМН ИСПОЛНЕН УСПЕШНО!" size 46 color "#ffffff" bold True xalign 0.5 yalign 0.5 text_align 0.5
+                    add Solid("#00e5ff") xsize 1920 ysize 4 yalign 1.0
+
+            button:
+                xsize 1920
+                ysize 1080
+                background None
+                action Return(True)
 
 # ------------------------------------------------------------------------------
 # ЭКРАН 4А: СВАРКА ШАБЛОНА «ПГТ» (УЖЕСТОЧЁННАЯ)
@@ -1486,7 +1510,7 @@ screen screen_minigame_weld():
         if renpy.loadable("images/bg/pgt_welding_workshop.png"):
             add Transform("images/bg/pgt_welding_workshop.png", size=(1920, 1080), fit="cover", matrixcolor=BrightnessMatrix(-0.58))
         else:
-            add Solid("#16120f")
+            add Solid("#05102a")
 
         fixed:
             ypos 18
@@ -1497,72 +1521,65 @@ screen screen_minigame_weld():
             frame:
                 xalign 0.0
                 yalign 0.5
-                background Solid("#241d18ee")
+                background Frame("images/ui/round_weld_hud.png", 18, 18)
                 padding (22, 10)
                 hbox:
-                    spacing 34
-                    text "Шаблон «ПГТ»: [mg_weld.progress_percent()]%" size 28 color "#ffcc66" bold True yalign 0.5
-                    text "Электрод: [int(mg_weld.points)]%" size 28 color ("#66ff66" if mg_weld.points >= 76 else ("#ffbb33" if mg_weld.points >= 46 else "#ff5555")) bold True yalign 0.5
-                    text "Проход: [min(mg_weld.stroke_idx + 1, 4)] / 4" size 26 color "#9ad0ff" bold True yalign 0.5
+                    spacing 26
+                    add Transform("images/ui/logo_pgt_white.png", size=(46, 46), fit="contain") yalign 0.5
+                    text "[mg_weld.progress_percent()]%" size 28 color "#7ae8ff" bold True yalign 0.5
+                    text "Электрод: [int(mg_weld.points)]%" size 28 color "#ffffff" bold True yalign 0.5
 
-            frame:
+            textbutton "Заново":
                 xalign 1.0
                 yalign 0.5
-                background Solid("#2a221cee")
-                padding (6, 6)
-                textbutton "Новый электрод":
-                    action Function(mg_weld.retry_electrode)
-                    text_size 25
-                    text_bold True
-                    padding (24, 10)
+                action Function(mg_weld.retry_electrode)
+                background Frame("images/ui/round_btn_idle.png", 18, 18)
+                hover_background Frame("images/ui/round_btn_hover.png", 18, 18)
+                text_size 25
+                text_bold True
+                text_color "#ffffff"
+                padding (32, 12)
 
         frame:
             xalign 0.5
             ypos 100
-            background Solid("#0d0b09")
-            padding (6, 6)
+            background Frame("images/ui/round_weld_hud.png", 18, 18)
+            padding (8, 8)
             add WeldContourDisplayable(mg_weld)
 
-        # Модальное окно брака ОТК, если электрод полностью сгорел
+        # Модальное скруглённое окно брака без лишнего текста
         if mg_weld.failed:
             frame:
                 xalign 0.5
                 yalign 0.5
-                xsize 840
-                background Solid("#4d161af8")
-                padding (6, 6)
-                frame:
-                    xfill True
-                    background Solid("#1a1114fa")
-                    padding (40, 34)
-                    vbox:
-                        spacing 20
+                xsize 640
+                background Frame("images/ui/round_mg_red_modal.png", 28, 28)
+                padding (44, 38)
+                vbox:
+                    spacing 24
+                    xalign 0.5
+                    text "ЭЛЕКТРОД СГОРЕЛ" size 38 color "#7ae8ff" bold True xalign 0.5
+                    textbutton "Заново":
                         xalign 0.5
-                        text "БРАК ОТК: ЭЛЕКТРОД СГОРЕЛ!" size 36 color "#ff6655" bold True xalign 0.5
-                        text "Вы допустили слишком много отклонений, отрывов дуги или перегревов металла.\nМастер выдал вам свежую заготовку «ПГТ» и новый электрод!" size 23 color "#f0e6e8" xalign 0.5 text_align 0.5 line_spacing 6
-                        frame:
-                            xalign 0.5
-                            background Solid("#8c2632")
-                            padding (4, 4)
-                            textbutton "Взять новый электрод и сварить заново":
-                                action Function(mg_weld.retry_electrode)
-                                text_size 26
-                                text_bold True
-                                text_color "#ffffff"
-                                padding (36, 14)
+                        action Function(mg_weld.retry_electrode)
+                        background Frame("images/ui/round_mg_red_btn.png", 18, 18)
+                        hover_background Frame("images/ui/round_mg_red_btn_hover.png", 18, 18)
+                        text_size 28
+                        text_bold True
+                        text_color "#ffffff"
+                        padding (52, 16)
 
         if mg_weld.is_all_welded():
-            frame:
+            textbutton "ДАЛЕЕ":
                 xalign 0.5
-                ypos 965
-                background Solid("#164226f5")
-                padding (8, 8)
-                textbutton "СДАТЬ РАБОТУ МАСТЕРУ":
-                    action Return(True)
-                    text_size 34
-                    text_bold True
-                    text_color "#66ff88"
-                    padding (56, 16)
+                ypos 962
+                action Return(True)
+                background Frame("images/ui/round_mg_green.png", 20, 20)
+                hover_background Frame("images/ui/round_mg_green_hover.png", 20, 20)
+                text_size 34
+                text_bold True
+                text_color "#ffffff"
+                padding (68, 18)
 
 # ------------------------------------------------------------------------------
 # ЭКРАН 7А: ПРОФОРИЕНТАЦИОННЫЙ ИТОГ ПО РЕЗУЛЬТАТАМ ВСЕХ ИГР
@@ -1615,8 +1632,8 @@ screen screen_career_result():
                         vbox:
                             spacing 12
                             yalign 0.5
-                            text "Вам подходит направление:" size 32 color "#ffea75" bold True
-                            text "[best['label']]" size 42 color "#66ff99" bold True
+                            text "Вам подходит направление:" size 32 color "#7ae8ff" bold True
+                            text "[best['label']]" size 42 color "#ffffff" bold True
 
                 # Выровненные строки и скруглённые хот-бары процентов по всем 6 направлениям
                 frame:
@@ -1642,7 +1659,7 @@ screen screen_career_result():
                                     yalign 0.5
                                     xsize 660
                                     ysize 86
-                                    text item["label"] size 25 bold is_top color ("#66ff99" if is_top else "#e2eef8") xalign 0.0 yalign 0.5
+                                    text item["label"] size 25 bold is_top color ("#7ae8ff" if is_top else "#ffffff") xalign 0.0 yalign 0.5
 
                                 frame:
                                     xpos 680
@@ -1663,7 +1680,7 @@ screen screen_career_result():
                                     yalign 0.5
                                     xsize 110
                                     ysize 86
-                                    text "[sc]%" size 28 bold True color ("#66ff99" if is_top else "#ffcc66") xalign 1.0 yalign 0.5
+                                    text "[sc]%" size 28 bold True color ("#7ae8ff" if is_top else "#ffffff") xalign 1.0 yalign 0.5
 
         # Полноэкранная область клика для перехода дальше без лишней кнопки
         button:
@@ -1674,7 +1691,7 @@ screen screen_career_result():
 
 # ------------------------------------------------------------------------------
 # ЭКРАН 7Б: ПОЛНЫЙ ИНТЕРАКТИВНЫЙ БУКЛЕТ СПЕЦИАЛЬНОСТЕЙ И ПРОФЕССИЙ ПГТ (23 ШТ.)
-# Адаптирован под мобильные экраны: крупный шрифт, скруглённые углы, полные описания
+# Единая цветовая палитра интерфейса (Белый-Синий-Голубой), скруглённые углы
 # ------------------------------------------------------------------------------
 screen screen_pgt_presentation():
     modal True
@@ -1685,7 +1702,7 @@ screen screen_pgt_presentation():
     fixed:
         xsize 1920
         ysize 1080
-        add Solid("#070e14f2")
+        add Solid("#05102af2")
 
         frame:
             xalign 0.5
@@ -1710,20 +1727,16 @@ screen screen_pgt_presentation():
                         yalign 0.5
                         spacing 24
                         add Transform("images/ui/logo_pgt_white.png", size=(108, 108), fit="contain") yalign 0.5
-                        vbox:
-                            yalign 0.5
-                            spacing 6
-                            text "ГБПОУ «ПРОКОПЬЕВСКИЙ ГОРНОТЕХНИЧЕСКИЙ ТЕХНИКУМ ИМ. В.П. РОМАНОВА»" size 28 color "#ffcc00" bold True
-                            text "Справочник абитуриента: все 23 специальности и профессии" size 22 color "#66ccff"
+                        text "ГБПОУ «ПРОКОПЬЕВСКИЙ ГОРНОТЕХНИЧЕСКИЙ ТЕХНИКУМ ИМ. В.П. РОМАНОВА»" size 28 color "#ffffff" bold True yalign 0.5
 
                     button:
                         xalign 1.0
                         yalign 0.5
-                        background Frame("images/ui/round_btn_idle.png", 20, 20)
+                        background Frame("images/ui/round_btn_active.png", 20, 20)
                         hover_background Frame("images/ui/round_btn_hover.png", 20, 20)
                         action Return()
                         padding (38, 18)
-                        text "Завершить" size 28 bold True color "#ffffff" xalign 0.5 yalign 0.5
+                        text "Далее" size 28 bold True color "#ffffff" xalign 0.5 yalign 0.5
 
                 # Крупные скруглённые верхние вкладки отделений: 5 * 360 + 4 * 11 = 1844 px
                 hbox:
@@ -1739,46 +1752,46 @@ screen screen_pgt_presentation():
                             hover_background Frame("images/ui/round_btn_hover.png", 20, 20)
                             action [SetVariable("selected_cat", cid), SetVariable("selected_specialty", first_in_cat)]
                             padding (12, 8)
-                            text ctitle size 23 bold True color ("#ffea75" if is_cat else "#cbdbe8") xalign 0.5 yalign 0.5 text_align 0.5
+                            text ctitle size 23 bold True color ("#ffffff" if is_cat else "#b8dcff") xalign 0.5 yalign 0.5 text_align 0.5
 
                 # Основная сетка: слева список специальностей (640 px) + отступ (26 px) + карточка описания справа (1178 px) = 1844 px
                 hbox:
                     xsize 1844
-                    ysize 716
+                    ysize 818
                     spacing 26
 
                     vbox:
                         xsize 640
-                        ysize 716
-                        spacing 10
+                        ysize 818
+                        spacing 12
 
                         for sp in cat_specs:
                             $ is_active = (selected_specialty == sp["id"])
                             $ is_rec = (recommended_spec_id == sp["id"])
                             button:
                                 xsize 640
-                                ysize 110
+                                ysize 124
                                 background Frame("images/ui/round_btn_active.png" if is_active else ("images/ui/round_btn_rec.png" if is_rec else "images/ui/round_btn_idle.png"), 20, 20)
                                 hover_background Frame("images/ui/round_btn_hover.png", 20, 20)
                                 action SetVariable("selected_specialty", sp["id"])
-                                padding (20, 12)
+                                padding (20, 14)
 
                                 vbox:
                                     xsize 600
                                     yalign 0.5
-                                    spacing 5
-                                    text (sp["short"] + ("  (ВАШ ПРОФИЛЬ)" if is_rec else "")) size 22 bold True color ("#66ff99" if is_rec else ("#ffffff" if is_active else "#d0dde8"))
-                                    text ("Код: " + sp["id"] + "  •  " + sp["qual"][:42]) size 18 color ("#ffea75" if is_active else "#8fb0c7")
+                                    spacing 6
+                                    text (sp["short"] + ("  (ВАШ ПРОФИЛЬ)" if is_rec else "")) size 22 bold True color ("#7ae8ff" if is_rec and not is_active else "#ffffff")
+                                    text (sp["id"] + "  •  " + sp["qual"][:44]) size 18 color ("#ffffff" if is_active else "#9ac8ff")
 
                     frame:
                         background Frame("images/ui/round_panel.png", 26, 26)
                         xsize 1178
-                        ysize 716
-                        padding (36, 28)
+                        ysize 818
+                        padding (38, 30)
 
                         viewport:
-                            xsize 1106
-                            ysize 660
+                            xsize 1102
+                            ysize 758
                             mousewheel True
                             draggable True
                             scrollbars "vertical"
@@ -1786,15 +1799,9 @@ screen screen_pgt_presentation():
 
                             vbox:
                                 spacing 18
-                                xsize 1076
+                                xsize 1072
 
-                                if cur_spec["id"] == recommended_spec_id:
-                                    frame:
-                                        background Frame("images/ui/round_badge_green.png", 18, 18)
-                                        padding (22, 12)
-                                        text "РЕКОМЕНДОВАНО ВАМ ПО РЕЗУЛЬТАТАМ ПРОХОЖДЕНИЯ МИНИ-ИГР!" size 22 color "#77ff99" bold True
-
-                                text cur_spec["title"] size 32 color "#4dd2ff" bold True line_spacing 5
+                                text cur_spec["title"] size 32 color "#7ae8ff" bold True line_spacing 5
 
                                 frame:
                                     background Frame("images/ui/round_subcard.png", 20, 20)
@@ -1803,52 +1810,112 @@ screen screen_pgt_presentation():
                                     vbox:
                                         spacing 10
                                         text ("Квалификация: " + cur_spec["qual"]) size 24 color "#ffffff" bold True line_spacing 4
-                                        text ("Срок и форма обучения: " + cur_spec["term"]) size 22 color "#ffdd88"
+                                        text ("Срок и форма обучения: " + cur_spec["term"]) size 22 color "#b8e6ff"
 
-                                vbox:
-                                    spacing 10
-                                    text "Описание специальности и виды деятельности:" size 24 color "#88ccff" bold True
-                                    text cur_spec["desc"] size 22 color "#e6f0fa" line_spacing 6
+                                text cur_spec["desc"] size 22 color "#f0f7ff" line_spacing 6
 
-                # Крупный читаемый скруглённый футер с контактами и ссылками приёмной комиссии ПГТ
+# ------------------------------------------------------------------------------
+# ЭКРАН 7В: ОТДЕЛЬНОЕ ОКНО КОНТАКТНЫХ ДАННЫХ И ССЫЛОК ПОСЛЕ БРОШЮРЫ
+# ------------------------------------------------------------------------------
+screen screen_pgt_contacts():
+    modal True
+
+    fixed:
+        xsize 1920
+        ysize 1080
+        add Solid("#05102af2")
+
+        frame:
+            xalign 0.5
+            yalign 0.5
+            xsize 1320
+            ysize 720
+            background Frame("images/ui/round_outer_bg.png", 32, 32)
+            padding (54, 44)
+
+            vbox:
+                spacing 28
+                xsize 1212
+                yfill True
+
+                hbox:
+                    spacing 28
+                    xalign 0.0
+                    add Transform("images/ui/logo_pgt_white.png", size=(124, 124), fit="contain") yalign 0.5
+                    text "КОНТАКТЫ" size 42 color "#ffffff" bold True yalign 0.5
+
                 frame:
-                    background Frame("images/ui/round_footer.png", 22, 22)
-                    xsize 1844
-                    ysize 88
-                    padding (28, 12)
+                    background Frame("images/ui/round_panel.png", 24, 24)
+                    xsize 1212
+                    padding (42, 30)
 
-                    fixed:
-                        xsize 1788
-                        ysize 64
-                        text "г. Прокопьевск • Тел.: +7 (384) 666-80-08 • Приёмная: 66-80-20 • pgtkromanov@mail.ru" size 22 color "#ffffff" xalign 0.0 yalign 0.5
-                        hbox:
-                            xalign 1.0
-                            yalign 0.5
-                            spacing 14
-                            textbutton "pgt.kemobl.ru":
-                                action OpenURL("https://pgt.kemobl.ru/")
-                                background Frame("images/ui/round_link_idle.png", 16, 16)
-                                hover_background Frame("images/ui/round_link_hover.png", 16, 16)
-                                padding (18, 10)
-                                text_size 22
-                                text_color "#66ccff"
-                                text_hover_color "#ffea75"
-                                text_bold True
-                            textbutton "vk.com/pgt_romanov":
-                                action OpenURL("https://vk.com/pgt_romanov")
-                                background Frame("images/ui/round_link_idle.png", 16, 16)
-                                hover_background Frame("images/ui/round_link_hover.png", 16, 16)
-                                padding (18, 10)
-                                text_size 22
-                                text_color "#66ccff"
-                                text_hover_color "#ffea75"
-                                text_bold True
-                            textbutton "MAX":
-                                action OpenURL("https://max.ru/id4223000033_gos")
-                                background Frame("images/ui/round_link_idle.png", 16, 16)
-                                hover_background Frame("images/ui/round_link_hover.png", 16, 16)
-                                padding (18, 10)
-                                text_size 22
-                                text_color "#66ccff"
-                                text_hover_color "#ffea75"
-                                text_bold True
+                    vbox:
+                        spacing 18
+                        xsize 1128
+
+                        fixed:
+                            xsize 1128
+                            ysize 36
+                            text "Адрес:" size 26 color "#7ae8ff" bold True xalign 0.0 yalign 0.5
+                            text "г. Прокопьевск, ул. Шишкина, д. 26" size 27 color "#ffffff" bold True xalign 1.0 yalign 0.5
+
+                        fixed:
+                            xsize 1128
+                            ysize 36
+                            text "Телефоны:" size 26 color "#7ae8ff" bold True xalign 0.0 yalign 0.5
+                            text "+7 (384) 666-80-08  •  Приёмная: 66-80-20" size 26 color "#ffffff" bold True xalign 1.0 yalign 0.5
+
+                        fixed:
+                            xsize 1128
+                            ysize 36
+                            text "Электронная почта:" size 26 color "#7ae8ff" bold True xalign 0.0 yalign 0.5
+                            text "pgtkromanov@mail.ru" size 26 color "#d8eeff" bold True xalign 1.0 yalign 0.5
+
+                hbox:
+                    xsize 1212
+                    spacing 24
+                    textbutton "pgt.kemobl.ru":
+                        xsize 388
+                        action OpenURL("https://pgt.kemobl.ru/")
+                        background Frame("images/ui/round_link_idle.png", 18, 18)
+                        hover_background Frame("images/ui/round_link_hover.png", 18, 18)
+                        padding (24, 18)
+                        text_size 25
+                        text_color "#ffffff"
+                        text_hover_color "#ffffff"
+                        text_bold True
+                        text_xalign 0.5
+                    textbutton "vk.com/pgt_romanov":
+                        xsize 388
+                        action OpenURL("https://vk.com/pgt_romanov")
+                        background Frame("images/ui/round_link_idle.png", 18, 18)
+                        hover_background Frame("images/ui/round_link_hover.png", 18, 18)
+                        padding (24, 18)
+                        text_size 25
+                        text_color "#ffffff"
+                        text_hover_color "#ffffff"
+                        text_bold True
+                        text_xalign 0.5
+                    textbutton "MAX":
+                        xsize 388
+                        action OpenURL("https://max.ru/id4223000033_gos")
+                        background Frame("images/ui/round_link_idle.png", 18, 18)
+                        hover_background Frame("images/ui/round_link_hover.png", 18, 18)
+                        padding (24, 18)
+                        text_size 25
+                        text_color "#ffffff"
+                        text_hover_color "#ffffff"
+                        text_bold True
+                        text_xalign 0.5
+
+                textbutton "Завершить":
+                    xsize 1212
+                    yalign 1.0
+                    action Return(True)
+                    background Frame("images/ui/round_btn_active.png", 20, 20)
+                    hover_background Frame("images/ui/round_btn_hover.png", 20, 20)
+                    padding (64, 20)
+                    text_size 30
+                    text_bold True
+                    text_color "#ffffff"
+                    text_xalign 0.5

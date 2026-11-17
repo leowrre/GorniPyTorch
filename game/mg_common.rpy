@@ -110,8 +110,16 @@ init -1 python:
         return False
 
     class MGTouchPad(renpy.Displayable):
-        """Виртуальный сенсорный D-Pad (крестовина) для мобильного управления зажатием пальца."""
-        def __init__(self, game, size=228, **kwargs):
+        """Виртуальный сенсорный D-Pad (крестовина) из FOTOVSTAVIT2 для мобильного управления."""
+        DPAD_IMGS = {
+            None: "images/ui/T_X_Dpad.png",
+            0: "images/ui/T_X_Dpad_Up.png",
+            1: "images/ui/T_X_Dpad_Right.png",
+            2: "images/ui/T_X_Dpad_Down.png",
+            3: "images/ui/T_X_Dpad_Left.png",
+        }
+
+        def __init__(self, game, size=258, **kwargs):
             super(MGTouchPad, self).__init__(**kwargs)
             self.game = game
             self.size = size
@@ -136,27 +144,13 @@ init -1 python:
         def render(self, width, height, st, at):
             S = self.size
             rv = renpy.Render(S, S)
-            cv = rv.canvas()
-            cx = S // 2
-            bsz = int(S * 0.31)
-            gap = int(S * 0.04)
-
-            # Подложка крестовины
-            cv.circle("#0b0f14aa", (cx, cx), cx - 2)
-            cv.circle("#354558", (cx, cx), cx - 2, 2)
-
-            btns = [
-                (0, cx - bsz // 2, gap, "▲"),
-                (1, S - gap - bsz, cx - bsz // 2, "▶"),
-                (2, cx - bsz // 2, S - gap - bsz, "▼"),
-                (3, gap, cx - bsz // 2, "◀"),
-            ]
-            for d, bx, by, sym in btns:
-                act = (self.cur_dir == d)
-                cv.rect("#ffaa33" if act else "#1f2b38", (bx, by, bsz, bsz))
-                cv.rect("#ffe699" if act else "#4a607a", (bx, by, bsz, bsz), 2)
-                mg_text(rv, sym, bx + bsz // 2, by + bsz // 2 - 16, 28,
-                        "#141a22" if act else "#dce8f5", True, align=0.5, st=st, at=at)
+            path = self.DPAD_IMGS.get(self.cur_dir, self.DPAD_IMGS[None])
+            key = ("dpad_exact", path, int(S))
+            d = MGTextCache.cache.get(key)
+            if d is None:
+                d = Transform(path, size=(int(S), int(S)))
+                MGTextCache.cache[key] = d
+            rv.blit(renpy.render(d, int(S), int(S), st, at), (0, 0))
             return rv
 
         def event(self, ev, x, y, st):
@@ -180,5 +174,42 @@ init -1 python:
             elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1 and self.touching:
                 self.touching = False
                 self._set_dir(None)
+                renpy.redraw(self, 0)
+            return None
+
+
+    class MGBombButton(renpy.Displayable):
+        """Кнопка B (закладка заряда) из FOTOVSTAVIT2, затемняющаяся при нажатии."""
+        def __init__(self, game, size=240, **kwargs):
+            super(MGBombButton, self).__init__(**kwargs)
+            self.game = game
+            self.size = size
+            self.pressed = False
+            self.press_until = 0.0
+
+        def render(self, width, height, st, at):
+            S = self.size
+            rv = renpy.Render(S, S)
+            is_dark = self.pressed or (st < self.press_until)
+            path = "images/ui/T_X_B_Color_Dark.png" if is_dark else "images/ui/T_X_B_Color.png"
+            mg_blit_img(rv, path, S // 2, S // 2, S, S, st=st, at=at)
+            if st < self.press_until:
+                renpy.redraw(self, 0.04)
+            return rv
+
+        def event(self, ev, x, y, st):
+            if getattr(self.game, "done", False):
+                self.pressed = False
+                return None
+            c = self.size / 2.0
+            inside = (math.hypot(x - c, y - c) <= c)
+            if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and inside:
+                self.pressed = True
+                self.press_until = st + 0.16
+                self.game.place_charge()
+                renpy.redraw(self, 0)
+                raise renpy.IgnoreEvent()
+            elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1 and self.pressed:
+                self.pressed = False
                 renpy.redraw(self, 0)
             return None
