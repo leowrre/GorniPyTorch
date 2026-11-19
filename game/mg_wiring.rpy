@@ -319,24 +319,27 @@ screen screen_minigame_wiring():
         ysize 1080
 
         add Solid("#05102a")
-        add Transform("images/ui/logo_pgt_white.png", size=(64, 64), fit="contain") xpos 22 ypos 44
 
-        add WiringDisplayable(mg_wiring) xpos 104 ypos 44
+        add WiringDisplayable(mg_wiring) xpos 44 ypos 44
 
-        # Правая скруглённая панель с исходным расположением элементов без переполнения
+        # Правая скруглённая панель с логотипом в правом верхнем углу
         frame:
-            xpos 1116
+            xpos 1076
             ypos 44
-            xsize 768
+            xsize 800
             ysize 992
             background Frame("images/ui/round_wiring_panel.png", 26, 26)
-            padding (36, 32)
+            padding (36, 28)
 
             vbox:
-                spacing 24
+                spacing 20
                 xfill True
 
-                text "ТЕХНИКА БЕЗОПАСНОСТИ" size 32 color "#ffffff" bold True xalign 0.5
+                fixed:
+                    xfill True
+                    ysize 96
+                    text "ТЕХНИКА БЕЗОПАСНОСТИ" size 31 color "#ffffff" bold True xalign 0.0 yalign 0.5
+                    add Transform("images/ui/logo_pgt_white.png", size=(96, 96), fit="contain") xalign 1.0 yalign 0.5
 
                 frame:
                     background Frame("images/ui/round_wiring_sub.png", 20, 20)

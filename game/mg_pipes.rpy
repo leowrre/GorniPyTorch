@@ -222,7 +222,7 @@ init python:
 
     class GearMachineDisplayable(renpy.Displayable):
         W, H = 1860, 910
-        TRAY_X, TRAY_Y, TRAY_W, CARD_H, CARD_STEP = 18, 108, 396, 122, 132
+        TRAY_X, TRAY_Y, TRAY_W, CARD_H, CARD_STEP = 18, 116, 396, 120, 130
         BOX_X, BOX_Y, BOX_W, BOX_H = 436, 12, 1412, 886
 
         def __init__(self, game, **kwargs):
@@ -307,7 +307,7 @@ init python:
             # --- Левый лоток с деталями в стиле Persona 3 Reload ---
             cv.rect("#092252", (8, 12, 416, self.H - 24))
             cv.rect("#00d8ff", (8, 12, 416, self.H - 24), 3)
-            mg_text(rv, "ШЕСТЕРНИ", 236, 40, 28, "#ffffff", True, align=0.5, st=st, at=at)
+            mg_text(rv, "ШЕСТЕРНИ", 252, 48, 28, "#ffffff", True, align=0.5, st=st, at=at)
 
             for i, (gid, sz) in enumerate(g.free_items()):
                 sp = g.GEAR_SPECS[sz]
@@ -507,7 +507,7 @@ screen screen_minigame_pipes():
 
         add Solid("#05102a")
         add GearMachineDisplayable(mg_pipes) xpos 30 ypos 22
-        add Transform("images/ui/logo_pgt_white.png", size=(52, 52), fit="contain") xpos 54 ypos 48
+        add Transform("images/ui/logo_pgt_white.png", size=(82, 82), fit="contain") xpos 46 ypos 36
 
         hbox:
             xpos 36

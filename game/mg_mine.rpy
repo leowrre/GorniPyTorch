@@ -510,13 +510,13 @@ screen screen_minigame_mine():
 
         # Центральное поле шахты 1300 x 956
         add MineBomberDisplayable(mg_mine) xpos 310 ypos 52
-        add Transform("images/ui/logo_pgt_white.png", size=(64, 64), fit="contain") xpos 26 ypos 24
+        add Transform("images/ui/logo_pgt_white.png", size=(116, 116), fit="contain") xpos 28 ypos 22
 
         # Слева сверху: скруглённая кнопка сброса в стиле Persona 3 Reload
         if not mg_mine.done:
             textbutton "Заново":
                 xpos 26
-                ypos 106
+                ypos 154
                 xsize 258
                 action Function(mg_mine.reset)
                 keyboard_focus False

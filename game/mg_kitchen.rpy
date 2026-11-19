@@ -618,9 +618,9 @@ init python:
 
             # Список слоёв слева в стиле Persona 3 Reload (Белый-Синий-Голубой)
             cv.rect("#f2f8ff", (24, 26, 366, 900))
-            cv.rect("#0b2868", (24, 26, 366, 72))
+            cv.rect("#0b2868", (24, 26, 366, 86))
             cv.rect("#00d4ff", (24, 26, 366, 900), 4)
-            mg_text(rv, "РЕЦЕПТ", 224, 44, 30, "#ffffff", True, align=0.5, st=st, at=at)
+            mg_text(rv, "РЕЦЕПТ", 242, 52, 30, "#ffffff", True, align=0.5, st=st, at=at)
 
             for i, lid in enumerate(reversed(g.ORDER)):
                 idx = len(g.ORDER) - 1 - i
@@ -721,7 +721,7 @@ screen screen_minigame_kitchen():
 
         # Арена кухни 1460 x 1018
         add KitchenStealDisplayable(mg_kitchen) xpos 20 ypos 30
-        add Transform("images/ui/logo_pgt_white.png", size=(48, 48), fit="contain") xpos 34 ypos 35
+        add Transform("images/ui/logo_pgt_white.png", size=(76, 76), fit="contain") xpos 28 ypos 18
 
         # Правая скруглённая панель: список Семёна с PNG-иконками + сенсорная крестовина
         frame:
@@ -827,7 +827,7 @@ screen screen_minigame_burger():
         ysize 1080
 
         add BurgerDisplayable(mg_burger) xpos 0 ypos 0
-        add Transform("images/ui/logo_pgt_white.png", size=(48, 48), fit="contain") xpos 40 ypos 38
+        add Transform("images/ui/logo_pgt_white.png", size=(76, 76), fit="contain") xpos 36 ypos 31
 
         # Скруглённая кнопка разбора бутера под чеком слева
         if not mg_burger.served and not mg_burger.all_ok():

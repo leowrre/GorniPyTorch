@@ -126,7 +126,7 @@ init python:
     class SiteBuilderDisplayable(renpy.Displayable):
         W, H = 1880, 950
         PX, PY = 478, 76
-        SAMPLE = (22, 86, 386, 206)
+        SAMPLE = (22, 102, 386, 190)
         PAL_X, PAL_Y, PAL_W, PAL_H, PAL_STEP = 14, 344, 404, 58, 65
 
         def __init__(self, game, **kwargs):
@@ -296,7 +296,7 @@ init python:
             # --- Образец макета слева сверху ---
             cv.rect("#0b265c", (10, 8, 412, 298))
             cv.rect("#00d8ff", (10, 8, 412, 298), 3)
-            mg_text(rv, "МАКЕТ САЙТА", 232, 24, 24, "#ffffff", True, align=0.5, st=st, at=at)
+            mg_text(rv, "МАКЕТ САЙТА", 248, 32, 25, "#ffffff", True, align=0.5, st=st, at=at)
             sx, sy, sw, sh = self.SAMPLE
             kx = sw / float(g.PAGE_W)
             ky = sh / float(g.PAGE_H)
@@ -430,7 +430,7 @@ screen screen_minigame_site():
 
         add Solid("#05102a")
         add SiteBuilderDisplayable(mg_site) xpos 20 ypos 14
-        add Transform("images/ui/logo_pgt_white.png", size=(48, 48), fit="contain") xpos 44 ypos 26
+        add Transform("images/ui/logo_pgt_white.png", size=(76, 76), fit="contain") xpos 36 ypos 18
 
         hbox:
             xpos 24

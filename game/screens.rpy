@@ -96,7 +96,7 @@ style frame:
 
 screen say(who, what):
 
-    add Transform("images/ui/logo_pgt_white.png", size=(64, 64), fit="contain") xpos 28 ypos 20
+    add Transform("images/ui/logo_pgt_white.png", size=(116, 116), fit="contain") xpos 28 ypos 20
 
     window:
         id "window"
