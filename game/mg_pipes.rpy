@@ -295,51 +295,127 @@ init python:
                     best_d = d
             return best
 
+        def _blit_cached_gear(self, rv, cx, cy, pitch_r, teeth, angle, fill_col, rim_col, hub_col, active, st, at):
+            m = (2.0 * pitch_r) / float(teeth)
+            box_r = int(math.ceil(pitch_r + 0.70 * m)) + 8
+            box_sz = box_r * 2
+            tex_key = ("gear_spr", int(pitch_r), int(teeth), fill_col, rim_col, hub_col, bool(active))
+            def _build_gear(gr, _st, _at):
+                self.draw_gear(gr.canvas(), box_r, box_r, pitch_r, teeth, 0.0, fill_col, rim_col, hub_col, active)
+            base_layer = MGStaticLayer.get(tex_key, box_sz, box_sz, _build_gear)
+            rot_q = int(round(math.degrees(angle) / 3.0)) * 3 % 360
+            if rot_q != 0:
+                rot_key = ("gear_rot", tex_key, rot_q)
+                d = MGTextCache.get(rot_key)
+                if d is None:
+                    d = Transform(base_layer, rotate=rot_q, rotate_pad=False)
+                    MGTextCache.put(rot_key, d)
+            else:
+                d = base_layer
+            rr = renpy.render(d, box_sz, box_sz, st, at)
+            rw, rh = rr.get_size()
+            rv.blit(rr, (int(cx - rw // 2), int(cy - rh // 2)))
+
+        def _base_box_render(self, st, at):
+            g = self.game
+            def _build(rv, _st, _at):
+                cv = rv.canvas()
+                cv.rect("#05122c", (0, 0, self.W, self.H))
+                cv.rect("#092252", (8, 12, 416, self.H - 24))
+                cv.rect("#00d8ff", (8, 12, 416, self.H - 24), 3)
+                mg_text(rv, "ШЕСТЕРНИ", 252, 48, 28, "#ffffff", True, align=0.5, st=_st, at=_at)
+
+                cv.rect("#1b222b", (self.BOX_X, self.BOX_Y, self.BOX_W, self.BOX_H))
+                cv.rect("#ffcc33", (self.BOX_X, self.BOX_Y, self.BOX_W, self.BOX_H), 4)
+                cv.rect("#232c37", (self.BOX_X + 18, self.BOX_Y + 18, self.BOX_W - 36, self.BOX_H - 36))
+
+                for bx in (self.BOX_X + 26, self.BOX_X + self.BOX_W - 26):
+                    for by in (self.BOX_Y + 26, self.BOX_Y + self.BOX_H - 26):
+                        cv.circle("#4b5a6b", (bx, by), 9)
+                        cv.circle("#141920", (bx, by), 4)
+
+                links = [
+                    ((660, 455), (877, 455)),
+                    ((877, 455), (992, 271)), ((992, 271), (1128, 197)), ((1128, 197), (1283, 197)),
+                    ((877, 455), (1063, 455)), ((1063, 455), (1218, 455)),
+                    ((877, 455), (992, 639)), ((992, 639), (1192, 723)), ((1192, 723), (1378, 723)),
+                ]
+                for a, b in links:
+                    cv.line("#171d24", a, b, 18)
+                    cv.line("#2d3947", a, b, 4)
+
+                # Подпись мотора (не меняется)
+                for fn in g.FIXED_NODES:
+                    if fn["role"] == "motor":
+                        fx, fy = fn["pos"]
+                        cv.rect("#121820eb", (fx - 72, fy + 116, 144, 48))
+                        cv.rect("#ff7744", (fx - 72, fy + 116, 144, 48), 2)
+                        mg_text(rv, fn["label"], fx, fy + 126, 22, "#ff9966", True, align=0.5, st=_st, at=_at)
+
+            layer = MGStaticLayer.get(("gears_static_box",), self.W, self.H, _build)
+            return renpy.render(layer, self.W, self.H, st, at)
+
+        def _tray_card_render(self, sz, st, at):
+            sp = self.game.GEAR_SPECS[sz]
+            key = ("gear_tray_card", sz)
+            def _build(r, _st, _at):
+                cv = r.canvas()
+                cv.rect("#0d3074", (0, 0, self.TRAY_W, self.CARD_H))
+                cv.rect(sp["fill"], (0, 0, self.TRAY_W, self.CARD_H), 2)
+                icon_r = 26 if sz == "S" else (34 if sz == "M" else 42)
+                self.draw_gear(cv, 64, self.CARD_H // 2, icon_r, sp["teeth"], 0.2,
+                               sp["fill"], sp["rim"], sp["hub"], False)
+                mg_text(r, sp["short"], 128, 44, 25, "#ffffff", True, st=_st, at=_at)
+            layer = MGStaticLayer.get(key, self.TRAY_W, self.CARD_H, _build)
+            return renpy.render(layer, self.TRAY_W, self.CARD_H, st, at)
+
+        @staticmethod
+        def _pin_socket_render(ring_col, st, at):
+            S = 76
+            key = ("gear_pin_sock", ring_col)
+            def _build(r, _st, _at):
+                cv = r.canvas()
+                c = S // 2
+                cv.circle("#131820", (c, c), 34)
+                cv.circle(ring_col, (c, c), 34, 4)
+                cv.circle("#8da2b8", (c, c), 15)
+                cv.circle("#141a22", (c, c), 7)
+            layer = MGStaticLayer.get(key, S, S, _build)
+            return renpy.render(layer, S, S, st, at)
+
+        @staticmethod
+        def _ghost_ring_render(ghost_r, ok_fit, st, at):
+            S = ghost_r * 2 + 12
+            key = ("gear_ghost_ring", int(ghost_r), bool(ok_fit))
+            def _build(r, _st, _at):
+                r.canvas().circle("#55ff88" if ok_fit else "#ff4444", (S // 2, S // 2), ghost_r, 4)
+            layer = MGStaticLayer.get(key, S, S, _build)
+            return renpy.render(layer, S, S, st, at)
+
+        @staticmethod
+        def _out_plaque_render(label, is_spin, st, at):
+            W, H = 226, 56
+            key = ("gear_out_plaque", label, bool(is_spin))
+            def _build(r, _st, _at):
+                cv = r.canvas()
+                cv.rect("#121820eb", (0, 0, W, H))
+                cv.rect("#44ff77" if is_spin else "#ff5555", (0, 0, W, H), 3)
+                cv.circle("#33ff66" if is_spin else "#ff3333", (26, H // 2), 12)
+                mg_text(r, label, 48, H // 2 - 14, 22, "#66ff88" if is_spin else "#ffffff", True, st=_st, at=_at)
+            layer = MGStaticLayer.get(key, W, H, _build)
+            return renpy.render(layer, W, H, st, at)
+
         def render(self, width, height, st, at):
             g = self.game
             motor_angle = st * 1.65
             nodes, spinning, angles = g.compute_kinematics(motor_angle)
 
             rv = renpy.Render(self.W, self.H)
-            cv = rv.canvas()
-            cv.rect("#05122c", (0, 0, self.W, self.H))
-
-            # --- Левый лоток с деталями в стиле Persona 3 Reload ---
-            cv.rect("#092252", (8, 12, 416, self.H - 24))
-            cv.rect("#00d8ff", (8, 12, 416, self.H - 24), 3)
-            mg_text(rv, "ШЕСТЕРНИ", 252, 48, 28, "#ffffff", True, align=0.5, st=st, at=at)
+            rv.blit(self._base_box_render(st, at), (0, 0))
 
             for i, (gid, sz) in enumerate(g.free_items()):
-                sp = g.GEAR_SPECS[sz]
                 cy = self.TRAY_Y + i * self.CARD_STEP
-                cv.rect("#0d3074", (self.TRAY_X, cy, self.TRAY_W, self.CARD_H))
-                cv.rect(sp["fill"], (self.TRAY_X, cy, self.TRAY_W, self.CARD_H), 2)
-                icon_r = 26 if sz == "S" else (34 if sz == "M" else 42)
-                self.draw_gear(cv, self.TRAY_X + 64, cy + self.CARD_H // 2, icon_r, sp["teeth"], 0.2,
-                               sp["fill"], sp["rim"], sp["hub"], False)
-                mg_text(rv, sp["short"], self.TRAY_X + 128, cy + 44, 25, "#ffffff", True, st=st, at=at)
-
-            # --- Стальной корпус редуктора станка (исходный вид) ---
-            cv.rect("#1b222b", (self.BOX_X, self.BOX_Y, self.BOX_W, self.BOX_H))
-            cv.rect("#ffcc33", (self.BOX_X, self.BOX_Y, self.BOX_W, self.BOX_H), 4)
-            cv.rect("#232c37", (self.BOX_X + 18, self.BOX_Y + 18, self.BOX_W - 36, self.BOX_H - 36))
-
-            # Декоративные болты по углам кожуха
-            for bx in (self.BOX_X + 26, self.BOX_X + self.BOX_W - 26):
-                for by in (self.BOX_Y + 26, self.BOX_Y + self.BOX_H - 26):
-                    cv.circle("#4b5a6b", (bx, by), 9)
-                    cv.circle("#141920", (bx, by), 4)
-
-            # --- Подсказывающие масляные каналы между валами ---
-            links = [
-                ((660, 455), (877, 455)),
-                ((877, 455), (992, 271)), ((992, 271), (1128, 197)), ((1128, 197), (1283, 197)),
-                ((877, 455), (1063, 455)), ((1063, 455), (1218, 455)),
-                ((877, 455), (992, 639)), ((992, 639), (1192, 723)), ((1192, 723), (1378, 723)),
-            ]
-            for a, b in links:
-                cv.line("#171d24", a, b, 18)
-                cv.line("#2d3947", a, b, 4)
+                rv.blit(self._tray_card_render(sz, st, at), (self.TRAY_X, cy))
 
             # --- Посадочные пустые шпильки (оси) ---
             hover_pin = self.pin_at(*g.drag_pos) if g.held else None
@@ -349,15 +425,12 @@ init python:
                 if g.placed.get(pid) is None:
                     is_flash = (g.flash_pin == pid and st < g.flash_until)
                     ring_col = "#ff4444" if is_flash else ("#ffcc33" if hover_pin == pid else "#5a6e82")
-                    cv.circle("#131820", (px, py), 34)
-                    cv.circle(ring_col, (px, py), 34, 4)
-                    cv.circle("#8da2b8", (px, py), 15)
-                    cv.circle("#141a22", (px, py), 7)
-                    if g.held is not None:
+                    rv.blit(self._pin_socket_render(ring_col, st, at), (px - 38, py - 38))
+                    if g.held is not None and hover_pin == pid:
                         ghost_r = g.GEAR_SPECS[g.held[1]]["r"]
-                        if hover_pin == pid:
-                            ok_fit = g.fits_on_pin(pid, g.held[1])
-                            cv.circle("#55ff88" if ok_fit else "#ff4444", (px, py), ghost_r, 4)
+                        ok_fit = g.fits_on_pin(pid, g.held[1])
+                        hs = ghost_r + 6
+                        rv.blit(self._ghost_ring_render(ghost_r, ok_fit, st, at), (px - hs, py - hs))
 
             # --- Отрисовка фиксированных валов (мотор и 3 выходных узла) ---
             for fn in g.FIXED_NODES:
@@ -371,19 +444,10 @@ init python:
                     fill_c = "#42b868" if is_spin else "#667382"
                     rim_c = "#206638" if is_spin else "#3c4652"
                     hub_c = "#b8ffd0" if is_spin else "#a5b2c0"
-                self.draw_gear(cv, fx, fy, sp["r"], sp["teeth"], angles[nid], fill_c, rim_c, hub_c, is_spin)
-
-                # Короткие лаконичные подписи мотора и выходных узлов
-                if fn["role"] == "motor":
-                    cv.rect("#121820eb", (fx - 72, fy + 116, 144, 48))
-                    cv.rect("#ff7744", (fx - 72, fy + 116, 144, 48), 2)
-                    mg_text(rv, fn["label"], fx, fy + 126, 22, "#ff9966", True, align=0.5, st=st, at=at)
-                else:
+                self._blit_cached_gear(rv, fx, fy, sp["r"], sp["teeth"], angles[nid], fill_c, rim_c, hub_c, is_spin, st, at)
+                if fn["role"] != "motor":
                     lx = fx + sp["r"] + 26
-                    cv.rect("#121820eb", (lx, fy - 28, 226, 56))
-                    cv.rect("#44ff77" if is_spin else "#ff5555", (lx, fy - 28, 226, 56), 3)
-                    cv.circle("#33ff66" if is_spin else "#ff3333", (lx + 26, fy), 12)
-                    mg_text(rv, fn["label"], lx + 48, fy - 14, 22, "#66ff88" if is_spin else "#ffffff", True, st=st, at=at)
+                    rv.blit(self._out_plaque_render(fn["label"], is_spin, st, at), (lx, fy - 28))
 
             # --- Отрисовка установленных игроком шестерней ---
             for p in g.PINS:
@@ -394,17 +458,15 @@ init python:
                 px, py = p["pos"]
                 sp = g.GEAR_SPECS[val[1]]
                 is_spin = spinning.get(pid, False)
-                self.draw_gear(cv, px, py, sp["r"], sp["teeth"], angles[pid],
-                               sp["fill"], sp["rim"], sp["hub"], is_spin)
+                self._blit_cached_gear(rv, px, py, sp["r"], sp["teeth"], angles[pid],
+                                       sp["fill"], sp["rim"], sp["hub"], is_spin, st, at)
 
             # --- Шестерня в руке при перетаскивании ---
             if g.held is not None:
                 mx, my = g.drag_pos
                 sp = g.GEAR_SPECS[g.held[1]]
-                drag_layer = renpy.Render(self.W, self.H)
-                self.draw_gear(drag_layer.canvas(), int(mx), int(my), sp["r"], sp["teeth"],
-                               motor_angle * 0.5, sp["fill"], sp["rim"], "#ffffff", False)
-                rv.blit(drag_layer, (0, 0))
+                self._blit_cached_gear(rv, int(mx), int(my), sp["r"], sp["teeth"],
+                                       motor_angle * 0.5, sp["fill"], sp["rim"], "#ffffff", False, st, at)
 
             renpy.redraw(self, 0.03)
             return rv

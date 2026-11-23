@@ -1,0 +1,13 @@
+# RenPyWeb progressive download rules - first match applies
+# '+' = progressive download, '-' = keep in game.zip (instant load, zero pixelation)
+#
+# Все изображения оптимизированы в WebP (~6.3 МБ вся графика игры) и упакованы
+# сразу в game.zip, чтобы полностью исключить пикселизацию (_placeholders).
+#
+# +/- type path
+- image game/**
+- music game/audio/voice/**
++ music game/audio/bgm/**
++ music game/audio/toreador_musicbox.wav
+- music game/audio/**
++ voice game/audio/voice/**

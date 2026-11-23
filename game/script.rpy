@@ -3,34 +3,35 @@
 ## ==============================================================================
 
 # ------------------------------------------------------------------------------
-# ФОНОВЫЕ ИЗОБРАЖЕНИЯ (РЕАЛЬНЫЕ ФОТО ПГТ + СТИЛИЗОВАННЫЕ ФОНЫ СПЕЦЛОКАЦИЙ)
+# ФОНОВЫЕ ИЗОБРАЖЕНИЯ (ОПТИМИЗИРОВАННЫЕ WEBP БЕЗ ПОТЕРИ КАЧЕСТВА)
 # ------------------------------------------------------------------------------
-image bg pgt_entrance = "images/bg/pgt_outside_2.png"                   # Вход и очищенный фасад главного корпуса ПГТ
-image bg pgt_checkpoint = "images/bg/pgt_checkpoint.png"                # Проходная с турникетом и рамками
-image bg pgt_hall_floor2 = "images/bg/pgt_inside.png"                   # Главный холл и арка к лестнице
-image bg pgt_it_entrance = "images/bg/pgt_it_entrance.png"              # Стеклянный вход в мастерские ИКТ (2-й этаж)
-image bg pgt_it_corridor = "images/bg/koridor_it.png"                   # Коридор ИТ-центра
-image bg pgt_it_maki = "images/bg/maki.png"                             # Кабинет с iMac (Маки)
-image bg pgt_it_center = "images/bg/sait_sloman.png"                    # Компьютерный центр (сломанный сайт)
-image bg pgt_web_dev = "images/bg/veb_rozrabo.png"                      # Схема шаблонов веб-разработки на доске
-image bg pgt_interactive_display = "images/bg/otovyi_ekran.png"         # Зал с интерактивным сенсорным дисплеем (готовый экран)
-image bg pgt_hallway_3 = "images/bg/pgt_hallway_3.png"                  # Подъём по лестнице на 3-й этаж
-image bg pgt_assembly_hall = "images/bg/actoviy.png"                    # Актовый зал
-image bg pgt_corridor_long = "images/bg/pgt_corridor_long.png"          # Длинный коридор мастерских
-image bg pgt_workshop_corridor = "images/bg/pgt_workshop_corridor.png"  # Коридор у двери мастерской «Электрослесарь подземный»
-image bg pgt_workshop = "images/bg/pgt_welding_workshop.png"            # Сварочная мастерская (5-й корпус)
-image bg pgt_blackout_room = Transform("images/bg/mep_main.png", matrixcolor=TintMatrix("#8cb8ff") * BrightnessMatrix(-0.62))
-image bg pgt_mine_polygon = "images/bg/pgt_mine_polygon.png"            # Открытый вход на учебный подземный полигон
-image bg pgt_mine_entry = Transform("images/bg/pgt_mine_entry.png", matrixcolor=ContrastMatrix(1.06) * BrightnessMatrix(0.05))
-image bg pgt_mine_tunnel = Transform("images/bg/poligon.png", matrixcolor=ContrastMatrix(1.06) * BrightnessMatrix(0.05))
-image bg pgt_mine_drill = Transform("images/bg/poligon.png", matrixcolor=ContrastMatrix(1.06) * BrightnessMatrix(0.05))
-image bg pgt_mine_breakthrough = Transform("images/bg/poligon.png", matrixcolor=ContrastMatrix(1.06) * BrightnessMatrix(0.05))
-image bg pgt_toilet_exit = "images/bg/koridor_vichust_center.png"       # Коридор вычислительного центра во 2-м корпусе
-image bg pgt_novii_koridor = "images/bg/novii_koridor.png"              # Коридор со стендом и золотым аттестатом
-image bg pgt_stairs_2 = "images/bg/dver_povarov.png"                    # Дверь у поваров во 2-м корпусе
-image bg pgt_culinary_hall = "images/bg/stolovaya.png"                  # Учебная лаборатория поварского дела
-image bg pgt_finish = "images/bg/pgt_outside_2.png"                     # Финальный двор у входа (первое фото)
+image bg pgt_entrance = "images/bg/pgt_outside_2.webp"                  # Вход и очищенный фасад главного корпуса ПГТ
+image bg pgt_checkpoint = "images/bg/pgt_checkpoint.webp"               # Проходная с турникетом и рамками
+image bg pgt_hall_floor2 = "images/bg/pgt_inside.webp"                  # Главный холл и арка к лестнице
+image bg pgt_it_entrance = "images/bg/pgt_it_entrance.webp"             # Стеклянный вход в мастерские ИКТ (2-й этаж)
+image bg pgt_it_corridor = "images/bg/koridor_it.webp"                  # Коридор ИТ-центра
+image bg pgt_it_maki = "images/bg/maki.webp"                            # Кабинет с iMac (Маки)
+image bg pgt_it_center = "images/bg/sait_sloman.webp"                   # Компьютерный центр (сломанный сайт)
+image bg pgt_web_dev = "images/bg/veb_rozrabo.webp"                     # Схема шаблонов веб-разработки на доске
+image bg pgt_interactive_display = "images/bg/otovyi_ekran.webp"        # Зал с интерактивным сенсорным дисплеем (готовый экран)
+image bg pgt_hallway_3 = "images/bg/pgt_hallway_3.webp"                 # Подъём по лестнице на 3-й этаж
+image bg pgt_assembly_hall = "images/bg/actoviy.webp"                   # Актовый зал
+image bg pgt_corridor_long = "images/bg/pgt_corridor_long.webp"         # Длинный коридор мастерских
+image bg pgt_workshop_corridor = "images/bg/pgt_workshop_corridor.webp" # Коридор у двери мастерской «Электрослесарь подземный»
+image bg pgt_workshop = "images/bg/pgt_welding_workshop.webp"           # Сварочная мастерская (5-й корпус)
+image bg pgt_blackout_room = Transform("images/bg/mep_main.webp", matrixcolor=TintMatrix("#8cb8ff") * BrightnessMatrix(-0.62))
+image bg pgt_mine_polygon = "images/bg/pgt_mine_polygon.webp"           # Открытый вход на учебный подземный полигон
+image bg pgt_mine_entry = Transform("images/bg/pgt_mine_entry.webp", matrixcolor=ContrastMatrix(1.06) * BrightnessMatrix(0.05))
+image bg pgt_mine_tunnel = Transform("images/bg/poligon.webp", matrixcolor=ContrastMatrix(1.06) * BrightnessMatrix(0.05))
+image bg pgt_mine_drill = Transform("images/bg/poligon.webp", matrixcolor=ContrastMatrix(1.06) * BrightnessMatrix(0.05))
+image bg pgt_mine_breakthrough = Transform("images/bg/poligon.webp", matrixcolor=ContrastMatrix(1.06) * BrightnessMatrix(0.05))
+image bg pgt_toilet_exit = "images/bg/koridor_vichust_center.webp"      # Коридор вычислительного центра во 2-м корпусе
+image bg pgt_novii_koridor = "images/bg/novii_koridor.webp"             # Коридор со стендом и золотым аттестатом
+image bg pgt_stairs_2 = "images/bg/dver_povarov.webp"                   # Дверь у поваров во 2-м корпусе
+image bg pgt_culinary_hall = "images/bg/stolovaya.webp"                 # Учебная лаборатория поварского дела
+image bg pgt_finish = "images/bg/pgt_outside_2.webp"                    # Финальный двор у входа (первое фото)
 
+<<<<<<< Updated upstream
 # Спрайты персонажей
 image prep = Transform("images/chars/prep.png", ysize=960, fit="contain")
 image master = "images/chars/master.png"
@@ -41,23 +42,38 @@ image chef = "images/chars/chef.png"
 image brig = "images/chars/dyayda_yura_shecter_svet.png"
 image worker = "images/chars/Muzhik_So_stankom.png"
 image worker point = "images/chars/Muzhik_so_stankom_ukazyvaet.png"
+=======
+# Спрайты персонажей (заранее отмасштабированы в WebP под целевую высоту экрана)
+image prep = "images/chars/prep.webp"
+image act panic = "images/chars/act_panic.webp"
+image act ask   = "images/chars/act_ask.webp"
+image act happy = "images/chars/act_happy.webp"
+image master = "images/chars/master.webp"
+image master_hand = "images/chars/master_hand.webp"
+image master_hand_fist = "images/chars/master_hand_fist.webp"
+image tesla = "images/chars/tesla.webp"
+image chef = "images/chars/chef.webp"
+image brig = "images/chars/dyayda_yura_shecter_svet.webp"
+image worker = "images/chars/Muzhik_So_stankom.webp"
+image worker point = "images/chars/Muzhik_so_stankom_ukazyvaet.webp"
+>>>>>>> Stashed changes
 
-# Спрайты Семёна (Старшак — все эмоции с прозрачным фоном)
-image sem default = Transform("images/chars/sem_default.png", ysize=960, fit="contain")
-image sem hello   = Transform("images/chars/sem_hello.png",   ysize=985, fit="contain")
-image sem explain = Transform("images/chars/sem_explain.png", ysize=980, fit="contain")
-image sem proud   = Transform("images/chars/sem_proud.png",   ysize=980, fit="contain")
-image sem smirk   = Transform("images/chars/sem_smirk.png",   ysize=965, fit="contain")
-image sem shrug   = Transform("images/chars/sem_shrug.png",   ysize=970, fit="contain")
-image sem epic    = Transform("images/chars/sem_epic.png",    ysize=1020, fit="contain")
-image sem whisper = Transform("images/chars/sem_whisper.png", ysize=960, fit="contain")
-image sem coat    = Transform("images/chars/sem_coat.png",    ysize=980, fit="contain")
-image sem present = Transform("images/chars/sem_present.png", ysize=1000, fit="contain")
-image sem laugh   = Transform("images/chars/sem_laugh.png",   ysize=970, fit="contain")
-image sem thumbs  = Transform("images/chars/sem_thumbs.png",  ysize=980, fit="contain")
-image sem point   = Transform("images/chars/sem_point.png",   ysize=970, fit="contain")
-image sem think   = Transform("images/chars/sem_think.png",   ysize=970, fit="contain")
-image sem shock   = Transform("images/chars/sem_shock.png",   ysize=965, fit="contain")
+# Спрайты Семёна (Старшак — заранее отмасштабированы в WebP с прозрачным фоном)
+image sem default = "images/chars/sem_default.webp"
+image sem hello   = "images/chars/sem_hello.webp"
+image sem explain = "images/chars/sem_explain.webp"
+image sem proud   = "images/chars/sem_proud.webp"
+image sem smirk   = "images/chars/sem_smirk.webp"
+image sem shrug   = "images/chars/sem_shrug.webp"
+image sem epic    = "images/chars/sem_epic.webp"
+image sem whisper = "images/chars/sem_whisper.webp"
+image sem coat    = "images/chars/sem_coat.webp"
+image sem present = "images/chars/sem_present.webp"
+image sem laugh   = "images/chars/sem_laugh.webp"
+image sem thumbs  = "images/chars/sem_thumbs.webp"
+image sem point   = "images/chars/sem_point.webp"
+image sem think   = "images/chars/sem_think.webp"
+image sem shock   = "images/chars/sem_shock.webp"
 
 # ------------------------------------------------------------------------------
 # ПЕРСОНАЖИ

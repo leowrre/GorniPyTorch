@@ -189,6 +189,27 @@ init python:
     build.classify('**/.**', None)
     build.classify('**/#**', None)
     build.classify('**/thumbs.db', None)
+<<<<<<< Updated upstream
+=======
+    build.classify('dists/**', None)
+    build.classify('assets_hq_backup/**', None)
+    build.classify('photos/**', None)
+    build.classify('photos2/**', None)
+    build.classify('errors.txt', None)
+    build.classify('log.txt', None)
+    build.classify('message.txt', None)
+    build.classify('traceback.txt', None)
+    build.classify('project.json', None)
+    build.classify('screenshot*.png', None)
+    build.classify('progressive_download.txt', None)
+    build.classify('web-icon.png', None)
+    build.classify('web-presplash.jpg', None)
+
+    ## Исключаем неиспользуемые старые аудиофайлы из сборок.
+    build.classify('game/audio/coffin_dance.wav', None)
+    build.classify('game/audio/pc_reboot.wav', None)
+    build.classify('game/audio/stealth_step.wav', None)
+>>>>>>> Stashed changes
 
     ## Чтобы архивировать файлы, классифицируйте их, например, как 'archive'.
 

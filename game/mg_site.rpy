@@ -153,9 +153,8 @@ init python:
                     return s["id"]
             return None
 
-        def part_render(self, pid, w, h, st, at):
+        def draw_part_into(self, r, pid, w, h, st, at):
             """Отрисовка блока официального сайта ПГТ по стандарту ФГИС «Госвеб»."""
-            r = renpy.Render(w, h)
             c = r.canvas()
             p = self.game.part(pid)
             c.rect(p["color"], (0, 0, w, h))
@@ -165,7 +164,7 @@ init python:
                 cx, cy = 20 + rad, h // 2
                 c.circle("#ffffff", (cx, cy), rad + 2)
                 logo_path = "images/ui/logo_pgt_black.png"
-                if renpy.loadable(logo_path):
+                if mg_loadable(logo_path):
                     lsz = max(16, int(rad * 1.65))
                     mg_blit_img(r, logo_path, cx, cy, lsz, lsz, st=st, at=at)
                 else:
@@ -262,6 +261,9 @@ init python:
                 mg_text(r, "Посетитель № 000137 • БЕЗ ГОСТа", w // 2, h // 2 - 32, 19, "#66ff00", False, align=0.5, st=st, at=at)
                 mg_text(r, "СКАЧАТЬ РЕФЕРАТЫ 2005", w // 2, h // 2 + 2, 26, "#ff5533", True, align=0.5, st=st, at=at)
 
+        def part_render(self, pid, w, h, st, at):
+            r = renpy.Render(w, h)
+            self.draw_part_into(r, pid, w, h, st, at)
             return r
 
         def blit_clipped(self, rv, sub, w, h, pos):
@@ -271,58 +273,84 @@ init python:
                 rv.blit(sub, pos)
 
         def card_render(self, pid, st, at, highlight=False):
-            p = self.game.part(pid)
-            r = renpy.Render(self.PAL_W, self.PAL_H)
-            bg_path = "images/ui/round_btn_active.png" if highlight else "images/ui/round_btn_idle.png"
-            bg_key = ("site_card_bg", bg_path, self.PAL_W, self.PAL_H)
-            bg_disp = MGTextCache.cache.get(bg_key)
-            if bg_disp is None:
-                bg_disp = Frame(bg_path, 18, 18)
-                MGTextCache.cache[bg_key] = bg_disp
-            r.blit(renpy.render(bg_disp, self.PAL_W, self.PAL_H, st, at), (0, 0))
-            c = r.canvas()
-            cy = self.PAL_H // 2
-            c.circle("#ffffff", (26, cy), 15)
-            c.circle(p["color"], (26, cy), 13)
-            mg_text(r, p["title"], 48, cy - 13, 19, "#ffffff", True, width=self.PAL_W - 58, st=st, at=at)
-            return r
+            key = ("site_card", pid, bool(highlight))
+            def _build(r, _st, _at):
+                p = self.game.part(pid)
+                bg_path = "images/ui/round_btn_active.png" if highlight else "images/ui/round_btn_idle.png"
+                r.blit(renpy.render(Frame(bg_path, 18, 18), self.PAL_W, self.PAL_H, _st, _at), (0, 0))
+                c = r.canvas()
+                cy = self.PAL_H // 2
+                c.circle("#ffffff", (26, cy), 15)
+                c.circle(p["color"], (26, cy), 13)
+                mg_text(r, p["title"], 48, cy - 13, 19, "#ffffff", True, width=self.PAL_W - 58, st=_st, at=_at)
+            layer = MGStaticLayer.get(key, self.PAL_W, self.PAL_H, _build)
+            return renpy.render(layer, self.PAL_W, self.PAL_H, st, at)
+
+        def cached_part_render(self, pid, w, h, st, at):
+            blink = (int(st * 3) % 2) if pid == "gif" else 0
+            key = ("site_part", pid, int(w), int(h), blink)
+            def _build(r, _st, _at):
+                self.draw_part_into(r, pid, w, h, (0.0 if blink == 0 else 0.35), _at)
+            layer = MGStaticLayer.get(key, w, h, _build, clip=True)
+            return renpy.render(layer, w, h, st, at)
+
+        def _base_render(self, st, at):
+            g = self.game
+            def _build(rv, _st, _at):
+                cv = rv.canvas()
+                cv.rect("#061638", (0, 0, self.W, self.H))
+
+                # --- Образец макета слева сверху ---
+                cv.rect("#0b265c", (10, 8, 412, 298))
+                cv.rect("#00d8ff", (10, 8, 412, 298), 3)
+                mg_text(rv, "МАКЕТ САЙТА", 248, 32, 25, "#ffffff", True, align=0.5, st=_st, at=_at)
+                sx, sy, sw, sh = self.SAMPLE
+                kx = sw / float(g.PAGE_W)
+                ky = sh / float(g.PAGE_H)
+                cv.rect("#f4f8ff", (sx, sy - 20, sw, sh + 20))
+                for s in g.SLOTS:
+                    x, y, w, h = s["rect"]
+                    p = g.part(s["need"])
+                    rx, ry = int(sx + x * kx), int((sy - 20) + y * ky)
+                    rw, rh = max(3, int(w * kx)), max(3, int(h * ky))
+                    cv.rect(p["color"], (rx, ry, rw, rh))
+                    lc = "#5c6f86" if s["need"] in ("news", "banner") else "#ffffff"
+                    for li in range(min(3, max(1, rh // 12))):
+                        cv.line(lc, (rx + 6, ry + 6 + li * 8), (rx + int(rw * 0.62), ry + 6 + li * 8), 2)
+
+                # --- Полноэкранное окно браузера ---
+                cv.rect("#dcebff", (442, 0, 1438, 950))
+                cv.circle("#00c8ff", (472, 30), 10)
+                cv.circle("#1864d8", (504, 30), 10)
+                cv.circle("#ffffff", (536, 30), 10)
+                cv.rect("#ffffff", (570, 12, 930, 38))
+                mg_text(rv, "pgt.kemobl.ru", 588, 17, 21, "#0a2c6e", True, st=_st, at=_at)
+                cv.rect("#f4f8ff", (458, 60, 1406, 876))
+
+                for s in g.SLOTS:
+                    x, y, w, h = s["rect"]
+                    ax, ay = self.PX + x, self.PY + y
+                    cv.rect("#e2eefc", (ax, ay, w, h))
+                    cv.rect("#38a8ff", (ax, ay, w, h), 2)
+
+            layer = MGStaticLayer.get(("site_base_chrome",), self.W, self.H, _build)
+            return renpy.render(layer, self.W, self.H, st, at)
+
+        @staticmethod
+        def _draw_box_outline(rv, color, x, y, w, h, thick, st, at):
+            mg_solid(rv, color, x, y, w, thick, st, at)
+            mg_solid(rv, color, x, y + h - thick, w, thick, st, at)
+            mg_solid(rv, color, x, y + thick, thick, h - 2 * thick, st, at)
+            mg_solid(rv, color, x + w - thick, y + thick, thick, h - 2 * thick, st, at)
 
         def render(self, width, height, st, at):
             g = self.game
             rv = renpy.Render(self.W, self.H)
-            cv = rv.canvas()
-            cv.rect("#061638", (0, 0, self.W, self.H))
+            rv.blit(self._base_render(st, at), (0, 0))
 
-            # --- Образец макета слева сверху ---
-            cv.rect("#0b265c", (10, 8, 412, 298))
-            cv.rect("#00d8ff", (10, 8, 412, 298), 3)
-            mg_text(rv, "МАКЕТ САЙТА", 248, 32, 25, "#ffffff", True, align=0.5, st=st, at=at)
-            sx, sy, sw, sh = self.SAMPLE
-            kx = sw / float(g.PAGE_W)
-            ky = sh / float(g.PAGE_H)
-            cv.rect("#f4f8ff", (sx, sy - 20, sw, sh + 20))
-            for s in g.SLOTS:
-                x, y, w, h = s["rect"]
-                p = g.part(s["need"])
-                rx, ry = int(sx + x * kx), int((sy - 20) + y * ky)
-                rw, rh = max(3, int(w * kx)), max(3, int(h * ky))
-                cv.rect(p["color"], (rx, ry, rw, rh))
-                lc = "#5c6f86" if s["need"] in ("news", "banner") else "#ffffff"
-                for li in range(min(3, max(1, rh // 12))):
-                    cv.line(lc, (rx + 6, ry + 6 + li * 8), (rx + int(rw * 0.62), ry + 6 + li * 8), 2)
-
-            # --- Крупные карточки деталей ---
+            # --- Крупные карточки деталей (закэшированы на GPU) ---
             for i, pid in enumerate(self.palette_items()):
-                rv.blit(self.card_render(pid, st, at), (self.PAL_X, self.PAL_Y + i * self.PAL_STEP))
-
-            # --- Полноэкранное окно браузера ---
-            cv.rect("#dcebff", (442, 0, 1438, 950))
-            cv.circle("#00c8ff", (472, 30), 10)
-            cv.circle("#1864d8", (504, 30), 10)
-            cv.circle("#ffffff", (536, 30), 10)
-            cv.rect("#ffffff", (570, 12, 930, 38))
-            mg_text(rv, "pgt.kemobl.ru", 588, 17, 21, "#0a2c6e", True, st=st, at=at)
-            cv.rect("#f4f8ff", (458, 60, 1406, 876))
+                rv.blit(self.card_render(pid, st, at, False), (self.PAL_X, self.PAL_Y + i * self.PAL_STEP))
 
             hover_slot = self.slot_at(*g.drag_pos) if g.held else None
             for s in g.SLOTS:
@@ -330,24 +358,19 @@ init python:
                 ax, ay = self.PX + x, self.PY + y
                 pid = g.placed[s["id"]]
                 if pid:
-                    self.blit_clipped(rv, self.part_render(pid, w, h, st, at), w, h, (ax, ay))
-                else:
-                    cv.rect("#e2eefc", (ax, ay, w, h))
-                    cv.rect("#38a8ff", (ax, ay, w, h), 2)
-                    if g.held:
-                        cv.rect("#00d8ff", (ax + 2, ay + 2, w - 4, h - 4), 3)
+                    rv.blit(self.cached_part_render(pid, w, h, st, at), (ax, ay))
+                elif g.held:
+                    self._draw_box_outline(rv, "#00d8ff", ax + 2, ay + 2, w - 4, h - 4, 3, st, at)
                 if hover_slot == s["id"]:
-                    top = renpy.Render(w, h)
-                    top.canvas().rect("#00d8ff", (0, 0, w, h), 6)
-                    rv.blit(top, (ax, ay))
+                    self._draw_box_outline(rv, "#00d8ff", ax, ay, w, h, 6, st, at)
 
             # --- Деталь в руке ---
             if g.held:
                 mx, my = g.drag_pos
                 rv.blit(self.card_render(g.held, st, at, True), (int(mx - self.PAL_W // 3), int(my - self.PAL_H // 2)))
 
-            if g.held or any(v == "gif" for v in g.placed.values()):
-                renpy.redraw(self, 0.05)
+            if any(v == "gif" for v in g.placed.values()):
+                renpy.redraw(self, 0.35)
             return rv
 
         def event(self, ev, x, y, st):
