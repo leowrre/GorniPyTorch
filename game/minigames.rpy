@@ -815,7 +815,8 @@ init python:
 
             if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and inside:
                 tx, ty = g.active_target()
-                if math.hypot(x - tx, y - ty) <= 58:
+                start_tol = 78 if renpy.variant("touch") else 62
+                if math.hypot(x - tx, y - ty) <= start_tol:
                     g.is_holding = True
                     g.hold_still_ticks = 0
                     g.cursor_pos = (int(x), int(y))
@@ -859,9 +860,14 @@ init python:
             tx, ty = stroke[g.pt_idx]
             dist_cur = math.hypot(x - tx, y - ty)
 
+            is_touch = renpy.variant("touch")
+            start_r = 78 if is_touch else 58
+            break_r = 82 if is_touch else 62
+            step_r = 52 if is_touch else 40
+
             # Первая точка линии (поджиг дуги)
             if g.pt_idx == 0:
-                if dist_cur <= 52:
+                if dist_cur <= start_r:
                     dev = int(dist_cur)
                     g.welded_strokes[g.stroke_idx].append((int(x), int(y), dev))
                     g.pt_idx = 1
@@ -872,9 +878,9 @@ init python:
                     g.status_col = "#66ff88"
                 return
 
-            # Ужесточение: увод руки дальше 56 px от текущей/предыдущей точки срывает дугу с прожогом!
+            # Ужесточение: увод руки слишком далеко от текущей/предыдущей точки срывает дугу с прожогом!
             px_prev, py_prev = stroke[g.pt_idx - 1]
-            if dist_cur > 62 and math.hypot(x - px_prev, y - py_prev) > 62:
+            if dist_cur > break_r and math.hypot(x - px_prev, y - py_prev) > break_r:
                 g.is_holding = False
                 g.burn_marks.append((x, y))
                 play_sfx("audio/electric_shock.wav")
@@ -890,7 +896,7 @@ init python:
                 stroke = g.strokes[g.stroke_idx]
                 tx, ty = stroke[g.pt_idx]
                 d = math.hypot(x - tx, y - ty)
-                if d <= 40:
+                if d <= step_r:
                     # Отклонение по нормали к отрезку шва
                     ax, ay = stroke[g.pt_idx - 1]
                     seg_len = max(1.0, math.hypot(tx - ax, ty - ay))
@@ -1874,14 +1880,13 @@ screen screen_pgt_presentation():
                         padding (38, 30)
 
                         vbox:
-                            spacing 14
+                            spacing 0
                             xsize 1102
 
-                            text cur_spec["title"] size 30 color "#7ae8ff" bold True line_spacing 4
-                            text ("Квалификация: " + cur_spec["qual"]) size 24 color "#ffffff" bold True line_spacing 4
-                            text ("Срок и форма обучения: " + cur_spec["term"]) size 22 color "#b8e6ff"
-                            null height 4
-                            text cur_spec["desc"] size 23 color "#f0f7ff" line_spacing 6
+                            text cur_spec["title"] size 26 color "#ffffff" bold True line_spacing 6
+                            text ("Квалификация: " + cur_spec["qual"]) size 24 color "#ffffff" line_spacing 6
+                            text ("Срок и форма обучения: " + cur_spec["term"]) size 24 color "#ffffff" line_spacing 6
+                            text cur_spec["desc"] size 24 color "#ffffff" line_spacing 6
 
 # ------------------------------------------------------------------------------
 # ЭКРАН 7В: ОТДЕЛЬНОЕ ОКНО КОНТАКТНЫХ ДАННЫХ И ССЫЛОК ПОСЛЕ БРОШЮРЫ
@@ -1898,7 +1903,7 @@ screen screen_pgt_contacts():
             xalign 0.5
             yalign 0.5
             xsize 1320
-            ysize 720
+            ysize 740
             background Frame("images/ui/round_outer_bg.png", 32, 32)
             padding (54, 44)
 
@@ -1943,41 +1948,47 @@ screen screen_pgt_contacts():
                 hbox:
                     xsize 1212
                     spacing 24
-                    textbutton "pgt.kemobl.ru":
+                    button:
                         xsize 388
+                        ysize 72
                         action OpenURL("https://pgt.kemobl.ru/")
                         background Frame("images/ui/round_link_idle.png", 18, 18)
                         hover_background Frame("images/ui/round_link_hover.png", 18, 18)
-                        padding (24, 18)
-                        text_size 25
-                        text_color "#ffffff"
-                        text_hover_color "#ffffff"
-                        text_bold True
-                        text_xalign 0.5
-                    textbutton "vk.com/pgt_romanov":
+                        padding (18, 14)
+                        hbox:
+                            spacing 14
+                            xalign 0.5
+                            yalign 0.5
+                            add Transform("images/ui/icon_web.png", size=(40, 40), fit="contain") yalign 0.5
+                            text "pgt.kemobl.ru" size 24 color "#ffffff" bold True yalign 0.5
+                    button:
                         xsize 388
+                        ysize 72
                         action OpenURL("https://vk.com/pgt_romanov")
                         background Frame("images/ui/round_link_idle.png", 18, 18)
                         hover_background Frame("images/ui/round_link_hover.png", 18, 18)
-                        padding (24, 18)
-                        text_size 25
-                        text_color "#ffffff"
-                        text_hover_color "#ffffff"
-                        text_bold True
-                        text_xalign 0.5
-                    textbutton "MAX":
+                        padding (18, 14)
+                        hbox:
+                            spacing 14
+                            xalign 0.5
+                            yalign 0.5
+                            add Transform("images/ui/icon_vk.png", size=(40, 40), fit="contain") yalign 0.5
+                            text "vk.com/pgt_romanov" size 23 color "#ffffff" bold True yalign 0.5
+                    button:
                         xsize 388
+                        ysize 72
                         action OpenURL("https://max.ru/id4223000033_gos")
                         background Frame("images/ui/round_link_idle.png", 18, 18)
                         hover_background Frame("images/ui/round_link_hover.png", 18, 18)
-                        padding (24, 18)
-                        text_size 25
-                        text_color "#ffffff"
-                        text_hover_color "#ffffff"
-                        text_bold True
-                        text_xalign 0.5
+                        padding (18, 14)
+                        hbox:
+                            spacing 14
+                            xalign 0.5
+                            yalign 0.5
+                            add Transform("images/ui/icon_max.png", size=(40, 40), fit="contain") yalign 0.5
+                            text "MAX" size 25 color "#ffffff" bold True yalign 0.5
 
-                textbutton "Завершить":
+                textbutton ("Пройти заново" if renpy.variant("web") else "Завершить"):
                     xsize 1212
                     yalign 1.0
                     action Return(True)
@@ -2050,7 +2061,11 @@ init python:
 
     def cheat_jump_to(target_label):
         renpy.store.cheat_panel_open = False
+        renpy.store.quick_menu = False
         renpy.store.gold_attestat_popup = False
+        renpy.game.preferences.volumes['music'] = 0.50
+        renpy.game.preferences.volumes['sfx'] = 0.65
+        renpy.game.preferences.volumes['voice'] = 1.0
         renpy.hide_screen("screen_gold_attestat_hotspot")
         renpy.hide_screen("screen_info_stand")
         renpy.music.stop(channel="music", fadeout=0.2)
@@ -2335,7 +2350,15 @@ screen screen_info_stand():
             ypos 572
             anchor (0.5, 0.5)
 
-        # Справа на стенде оставлено свободное место под будущее фото (x ~ 1210..1650)
+        # Справа на стенде — фото медиацентра под небольшим углом
+        add Transform(Solid("#1a0e0666", xsize=420, ysize=315), rotate=5.0, subpixel=True):
+            xpos 1418
+            ypos 582
+            anchor (0.5, 0.5)
+        add Transform("images/mg/media_center.webp", size=(420, 315), fit="contain", rotate=5.0, subpixel=True):
+            xpos 1410
+            ypos 572
+            anchor (0.5, 0.5)
 
         # Посередине — золотой аттестат без белого фона (кликабелен)
         add Solid("#1a0e0670", xsize=380, ysize=546):

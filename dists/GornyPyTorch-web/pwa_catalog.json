@@ -1,1 +1,31 @@
-{"files": ["game.zip", "index.html", "index.html.symbols", "manifest.json", "renpy-pre.js", "renpy.data", "renpy.js", "renpy.wasm", "service-worker.js", "web-presplash.jpg", "game/audio/toreador_musicbox.wav", "game/audio/bgm/ddlc_2.ogg", "game/audio/bgm/ddlc_3.ogg", "game/audio/bgm/ddlc_4.ogg", "game/audio/bgm/ddlc_5.ogg", "game/audio/bgm/ddlc_6.ogg", "game/audio/bgm/ddlc_7.ogg", "game/audio/bgm/ddlc_8.ogg", "game/audio/voice/act/act01.mp3", "game/audio/voice/act/act02.mp3", "game/audio/voice/act/act03.mp3", "game/audio/voice/act/act04.mp3", "game/audio/voice/act/act05.mp3", "game/audio/voice/brig/brig01.mp3", "game/audio/voice/brig/brig02.mp3", "game/audio/voice/brig/brig03.mp3", "game/audio/voice/brig/brig04.mp3", "game/audio/voice/dima/dima01.mp3", "game/audio/voice/gg/gg01.mp3", "game/audio/voice/gg/gg02.mp3", "game/audio/voice/gg/gg03.mp3", "game/audio/voice/gg/gg04.mp3", "game/audio/voice/gg/gg05.mp3", "game/audio/voice/gg/gg06.mp3", "game/audio/voice/gg/gg07.mp3", "game/audio/voice/gg/gg08.mp3", "game/audio/voice/gg/gg09.mp3", "game/audio/voice/gg/gg10.mp3", "game/audio/voice/gg/gg11.mp3", "game/audio/voice/gg/gg12.mp3", "game/audio/voice/gg/gg13.mp3", "game/audio/voice/gg/gg14.mp3", "game/audio/voice/gg/gg15.mp3", "game/audio/voice/master/master01.mp3", "game/audio/voice/master/master02.mp3", "game/audio/voice/master/master03.mp3", "game/audio/voice/master/master04.mp3", "game/audio/voice/master/master05.mp3", "game/audio/voice/master/master06.mp3", "game/audio/voice/prep/prep01.mp3", "game/audio/voice/semen/semen01.mp3", "game/audio/voice/semen/semen02.mp3", "game/audio/voice/semen/semen03.mp3", "game/audio/voice/semen/semen04.mp3", "game/audio/voice/semen/semen05.mp3", "game/audio/voice/semen/semen06.mp3", "game/audio/voice/semen/semen07.mp3", "game/audio/voice/semen/semen08.mp3", "game/audio/voice/semen/semen09.mp3", "game/audio/voice/semen/semen10.mp3", "game/audio/voice/semen/semen11.mp3", "game/audio/voice/semen/semen12.mp3", "game/audio/voice/semen/semen13.mp3", "game/audio/voice/semen/semen14.mp3", "game/audio/voice/semen/semen15.mp3", "game/audio/voice/semen/semen16.mp3", "game/audio/voice/semen/semen17.mp3", "game/audio/voice/semen/semen18.mp3", "game/audio/voice/semen/semen19.mp3", "game/audio/voice/semen/semen20.mp3", "game/audio/voice/semen/semen21.mp3", "game/audio/voice/semen/semen22.mp3", "game/audio/voice/semen/semen23.mp3", "game/audio/voice/semen/semen24.mp3", "game/audio/voice/semen/semen25.mp3", "game/audio/voice/semen/semen26.mp3", "game/audio/voice/semen/semen27.mp3", "game/audio/voice/semen/semen28.mp3", "game/audio/voice/semen/semen29.mp3", "game/audio/voice/semen/semen30.mp3", "game/audio/voice/semen/semen31.mp3", "game/audio/voice/semen/semen32.mp3", "game/audio/voice/semen/semen33.mp3", "game/audio/voice/semen/semen34.mp3", "game/audio/voice/semen/semen35.mp3", "game/audio/voice/semen/semen36.mp3", "game/audio/voice/semen/semen37.mp3", "game/audio/voice/semen/semen38.mp3", "game/audio/voice/semen/semen39.mp3", "game/audio/voice/semen/semen40.mp3", "game/audio/voice/semen/semen41.mp3", "game/audio/voice/tesla/tesla01.mp3", "game/audio/voice/tesla/tesla02.mp3", "game/audio/voice/tesla/tesla03.mp3", "game/audio/voice/worker/worker01.mp3", "game/audio/voice/worker/worker02.mp3", "game/audio/voice/worker/worker03.mp3", "icons/icon-128x128-maskable.png", "icons/icon-128x128.png", "icons/icon-144x144-maskable.png", "icons/icon-144x144.png", "icons/icon-152x152-maskable.png", "icons/icon-152x152.png", "icons/icon-192x192-maskable.png", "icons/icon-192x192.png", "icons/icon-384x384-maskable.png", "icons/icon-384x384.png", "icons/icon-512x512-maskable.png", "icons/icon-512x512.png", "icons/icon-72x72-maskable.png", "icons/icon-72x72.png", "icons/icon-96x96-maskable.png", "icons/icon-96x96.png"], "version": 1795417672}
+{
+  "files": [
+    "game.zip",
+    "icons/icon-128x128-maskable.png",
+    "icons/icon-128x128.png",
+    "icons/icon-144x144-maskable.png",
+    "icons/icon-144x144.png",
+    "icons/icon-152x152-maskable.png",
+    "icons/icon-152x152.png",
+    "icons/icon-192x192-maskable.png",
+    "icons/icon-192x192.png",
+    "icons/icon-384x384-maskable.png",
+    "icons/icon-384x384.png",
+    "icons/icon-512x512-maskable.png",
+    "icons/icon-512x512.png",
+    "icons/icon-72x72-maskable.png",
+    "icons/icon-72x72.png",
+    "icons/icon-96x96-maskable.png",
+    "icons/icon-96x96.png",
+    "index.html",
+    "index.html.symbols",
+    "manifest.json",
+    "renpy-pre.js",
+    "renpy.data",
+    "renpy.js",
+    "renpy.wasm",
+    "web-presplash.jpg"
+  ],
+  "name": "GornyPyTorch",
+  "version": 1795682963
+}

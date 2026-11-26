@@ -437,13 +437,13 @@ init python:
     @gui.variant
     def small():
 
-        ## Размеры шрифтов.
-        gui.text_size = 45
-        gui.name_text_size = 54
-        gui.notify_text_size = 38
-        gui.interface_text_size = 45
-        gui.button_text_size = 45
-        gui.label_text_size = 51
+        ## Размеры шрифтов (адаптированы под длинные русские реплики и имена на смартфонах).
+        gui.text_size = 40
+        gui.name_text_size = 46
+        gui.notify_text_size = 36
+        gui.interface_text_size = 42
+        gui.button_text_size = 42
+        gui.label_text_size = 46
 
         ## Регулирует местоположение текстового окна.
         gui.textbox_height = 360

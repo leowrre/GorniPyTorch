@@ -260,12 +260,8 @@ screen quick_menu():
             textbutton _("Опции") action ShowMenu('preferences')
 
 
-## Данный код гарантирует, что экран быстрого меню будет показан в игре в любое
-## время, если только игрок не скроет интерфейс.
-init python:
-    config.overlay_screens.append("quick_menu")
-
-default quick_menu = True
+## Нижняя панель быстрого меню отключена.
+default quick_menu = False
 
 style quick_menu is hbox
 style quick_button is default

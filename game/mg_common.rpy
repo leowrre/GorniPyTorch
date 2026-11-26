@@ -437,3 +437,18 @@ init -1 python:
                 self.pressed = False
                 renpy.redraw(self, 0)
             return None
+
+
+init 999 python:
+    # При старте игры заранее индексируем доступность всех картинок и аудио из game.zip
+    # и прогреваем мелкие UI/мини-игровые спрайты в кэше (без загрузки всех 1920x1080 фонов в VRAM).
+    def _preload_game_assets_index():
+        for fn in renpy.list_files():
+            if fn.startswith("images/") or fn.startswith("audio/"):
+                _MG_LOADABLE_CACHE[fn] = True
+            if fn.startswith("images/ui/") and fn.lower().endswith((".png", ".webp")):
+                renpy.start_predict(fn)
+            elif fn.startswith("images/mg/") and fn.lower().endswith((".png", ".webp")):
+                renpy.start_predict(fn)
+
+    config.start_callbacks.append(_preload_game_assets_index)
