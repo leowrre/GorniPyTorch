@@ -1,0 +1,14 @@
+# RenPyWeb progressive download rules - first match applies
+# '+' = progressive download, '-' = keep in game.zip (100% preloaded before game start)
+#
+# Все игровые ассеты (графика, фоновая музыка, звуки, озвучка, шрифты и скрипты)
+# упакованы целиком в game.zip и предзагружаются в память до старта игры,
+# чтобы обрыв интернета посреди игры не приводил к пропаже ассетов.
+#
+# +/- type path
+- image **
+- music **
+- voice **
+- image game/**
+- music game/**
+- voice game/**

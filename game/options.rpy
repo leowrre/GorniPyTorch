@@ -54,6 +54,14 @@ define config.has_sound = True
 define config.has_music = True
 define config.has_voice = True
 
+define config.default_music_volume = 0.50
+define config.default_sfx_volume = 0.65
+define config.default_voice_volume = 1.0
+
+## Предзагружаем следующие 64 оператора (фоны, спрайты, экраны) заранее в кэш,
+## чтобы сцены и мини-игры открывались мгновенно и без подгрузок.
+define config.predict_statements = 64
+
 
 ## Чтобы разрешить игроку тестировать громкость на звуковом или голосовом
 ## каналах, раскомментируйте строчку и настройте пример звука для прослушивания.
@@ -131,7 +139,9 @@ default preferences.text_cps = 0
 ## Стандартная задержка авточтения. Большие значения означают долгие ожидания, а
 ## от 0 до 30 — вполне допустимый диапазон.
 
-default preferences.afm_time = 15
+default preferences.afm_time = 4
+default preferences.afm_enable = True
+default preferences.afm_after_click = True
 
 
 ## Директория сохранений #######################################################
@@ -189,6 +199,24 @@ init python:
     build.classify('**/.**', None)
     build.classify('**/#**', None)
     build.classify('**/thumbs.db', None)
+    build.classify('dists/**', None)
+    build.classify('assets_hq_backup/**', None)
+    build.classify('photos/**', None)
+    build.classify('photos2/**', None)
+    build.classify('errors.txt', None)
+    build.classify('log.txt', None)
+    build.classify('message.txt', None)
+    build.classify('traceback.txt', None)
+    build.classify('project.json', None)
+    build.classify('screenshot*.png', None)
+    build.classify('progressive_download.txt', None)
+    build.classify('web-icon.png', None)
+    build.classify('web-presplash.jpg', None)
+
+    ## Исключаем неиспользуемые старые аудиофайлы из сборок.
+    build.classify('game/audio/coffin_dance.wav', None)
+    build.classify('game/audio/pc_reboot.wav', None)
+    build.classify('game/audio/stealth_step.wav', None)
 
     ## Чтобы архивировать файлы, классифицируйте их, например, как 'archive'.
 

@@ -25,7 +25,7 @@ init python:
         def render(self, width, height, st, at):
             rv = renpy.Render(self.width, self.height)
 
-            bg_path = "images/bg/pgt_workshop_corridor.png"
+            bg_path = "images/bg/pgt_workshop_corridor.webp"
             if renpy.loadable(bg_path):
                 bg_disp = self._cache.get("dark_corridor")
                 if bg_disp is None:
@@ -38,20 +38,21 @@ init python:
                     self._cache["dark_corridor"] = bg_disp
                 rv.blit(renpy.render(bg_disp, self.width, self.height, st, at), (0, 0))
             else:
-                rv.canvas().rect("#030408", (0, 0, self.width, self.height))
+                mg_solid(rv, "#030408", 0, 0, self.width, self.height, st, at)
 
             phase = (st * 6.5) % 1.0
             flicker_on = (phase < 0.38) or (0.55 < phase < 0.72) or (math.sin(st * 19.0) > 0.65)
 
             if flicker_on:
                 cx, cy = 960, 430
-                glow_layer = renpy.Render(self.width, self.height)
-                glow_cv = glow_layer.canvas()
-                glow_cv.circle("#0a2238aa", (cx, cy - 30), 250)
-                glow_cv.circle("#11385a88", (cx, cy - 30), 180)
-                rv.blit(glow_layer, (0, 0))
+                def _build_glow(gr, _st, _at):
+                    gcv = gr.canvas()
+                    gcv.circle("#0a2238aa", (260, 260), 250)
+                    gcv.circle("#11385a88", (260, 260), 180)
+                glow_layer = MGStaticLayer.get(("tesla_glow_circle",), 520, 520, _build_glow)
+                rv.blit(renpy.render(glow_layer, 520, 520, st, at), (cx - 260, cy - 290))
 
-                tesla_path = "images/chars/tesla.png"
+                tesla_path = "images/chars/tesla.webp"
                 if renpy.loadable(tesla_path):
                     t_disp = self._cache.get("tesla_flicker")
                     if t_disp is None:
@@ -66,15 +67,15 @@ init python:
                     tw, th = tr.get_size()
                     rv.blit(tr, (int(cx - tw / 2), int(835 - th)))
 
-                spark_layer = renpy.Render(self.width, self.height)
-                spark_cv = spark_layer.canvas()
+                spark_rv = renpy.Render(460, 460)
+                spark_cv = spark_rv.canvas()
                 for _ in range(4):
-                    ax = cx + random.randint(-190, 190)
-                    ay = cy + random.randint(-210, 180)
-                    bx = ax + random.randint(-40, 40)
-                    by = ay + random.randint(-40, 40)
+                    ax = 230 + random.randint(-175, 175)
+                    ay = 230 + random.randint(-190, 175)
+                    bx = max(4, min(456, ax + random.randint(-38, 38)))
+                    by = max(4, min(456, ay + random.randint(-38, 38)))
                     spark_cv.line("#66ffff", (ax, ay), (bx, by), 2)
-                rv.blit(spark_layer, (0, 0))
+                rv.blit(spark_rv, (cx - 230, cy - 230))
 
             renpy.redraw(self, 0.06)
             return rv
@@ -128,98 +129,95 @@ init python:
 
 
     class TurnstileDisplayable(renpy.Displayable):
-        _bg_disp = None
-
         def __init__(self, game, **kwargs):
             super(TurnstileDisplayable, self).__init__(**kwargs)
             self.game = game
             self.width = 1920
             self.height = 1080
 
+        def _state_layer_render(self, state_key, st, at):
+            def _build(rv, _st, _at):
+                cp_path = "images/bg/pgt_turnstile_closeup.webp"
+                if not renpy.loadable(cp_path):
+                    cp_path = "images/bg/pgt_checkpoint.webp"
+                if renpy.loadable(cp_path):
+                    bg_d = Transform(cp_path, size=(self.width, self.height), fit="cover", matrixcolor=BrightnessMatrix(-0.46))
+                    rv.blit(renpy.render(bg_d, self.width, self.height, _st, _at), (0, 0))
+                else:
+                    mg_solid(rv, "#0d151e", 0, 0, self.width, self.height, _st, _at)
+
+                ui = renpy.Render(self.width, self.height)
+                canvas = ui.canvas()
+                canvas.rect("#2c3c4cd8", (170, 210, 380, 660))
+                canvas.rect("#4a627a", (170, 210, 380, 660), 5)
+                canvas.rect("#394d60", (190, 210, 340, 44))
+
+                canvas.rect("#2c3c4cd8", (1370, 210, 380, 660))
+                canvas.rect("#4a627a", (1370, 210, 380, 660), 5)
+                canvas.rect("#394d60", (1390, 210, 340, 44))
+
+                is_green = (state_key in ("green", "success"))
+                if state_key == "success":
+                    canvas.rect("#1e5938", (550, 280, 58, 500))
+                    canvas.rect("#1e5938", (1312, 280, 58, 500))
+                    canvas.circle("#44ff77", (960, 520), 115)
+                    canvas.circle("#133a24", (960, 520), 92)
+                    canvas.line("#ffffff", (960, 585), (960, 455), 16)
+                    canvas.line("#ffffff", (905, 510), (960, 450), 16)
+                    canvas.line("#ffffff", (1015, 510), (960, 450), 16)
+                else:
+                    flap_col = "#1f6b3dcc" if is_green else "#752028cc"
+                    border_col = "#55ff88" if is_green else "#ff5555"
+                    canvas.polygon(flap_col, [(550, 275), (942, 345), (942, 715), (550, 775)])
+                    canvas.polygon(border_col, [(550, 275), (942, 345), (942, 715), (550, 775)], 5)
+                    canvas.polygon(flap_col, [(1370, 275), (978, 345), (978, 715), (1370, 775)])
+                    canvas.polygon(border_col, [(1370, 275), (978, 345), (978, 715), (1370, 775)], 5)
+
+                canvas.rect("#111921", (255, 290, 210, 460))
+                canvas.rect("#53687e", (255, 290, 210, 460), 3)
+                if not is_green:
+                    canvas.circle("#6b1515", (360, 415), 78)
+                    canvas.circle("#ff3333", (360, 415), 60)
+                    canvas.circle("#ffaaaa", (342, 396), 18)
+                    canvas.circle("#162c1e", (360, 625), 56)
+                else:
+                    canvas.circle("#2e1818", (360, 415), 56)
+                    canvas.circle("#145e28", (360, 625), 78)
+                    canvas.circle("#33ff66", (360, 625), 60)
+                    canvas.circle("#b8ffcc", (342, 606), 18)
+
+                canvas.rect("#16202a", (1430, 290, 260, 460))
+                canvas.rect("#44ff88" if is_green else "#3a88cc", (1430, 290, 260, 460), 4)
+                canvas.circle("#223242", (1560, 470), 74)
+                canvas.circle("#66ff99" if is_green else "#66ccff", (1560, 470), 74, 4)
+                canvas.circle("#66ff99" if is_green else "#66ccff", (1560, 470), 42, 3)
+                canvas.circle("#66ff99" if is_green else "#66ccff", (1560, 470), 14)
+                rv.blit(ui, (0, 0))
+
+            layer = MGStaticLayer.get(("turnstile_state", state_key), self.width, self.height, _build)
+            return renpy.render(layer, self.width, self.height, st, at)
+
+        @staticmethod
+        def _card_render(st, at):
+            def _build(r, _st, _at):
+                cv = r.canvas()
+                cv.rect("#0b1015", (8, 10, 190, 118))
+                cv.rect("#e8f1f8", (0, 0, 190, 118))
+                cv.rect("#1d5fa8", (0, 16, 190, 26))
+                cv.rect("#8ca0b5", (20, 62, 110, 12))
+                cv.rect("#8ca0b5", (20, 84, 75, 10))
+                cv.rect("#336699", (0, 0, 190, 118), 3)
+            layer = MGStaticLayer.get(("turnstile_pass_card",), 200, 130, _build)
+            return renpy.render(layer, 200, 130, st, at)
+
         def render(self, width, height, st, at):
+            state_key = "success" if self.game.status == "success" else ("green" if self.game.light == "green" else "red")
             rv = renpy.Render(self.width, self.height)
-
-            # Крупный план реального турникета ПГТ из photos2 (или общий план проходной)
-            cp_path = "images/bg/pgt_turnstile_closeup.png"
-            if not renpy.loadable(cp_path):
-                cp_path = "images/bg/pgt_checkpoint.png"
-            if renpy.loadable(cp_path):
-                if TurnstileDisplayable._bg_disp is None:
-                    TurnstileDisplayable._bg_disp = Transform(
-                        cp_path,
-                        size=(self.width, self.height),
-                        fit="cover",
-                        matrixcolor=BrightnessMatrix(-0.46)
-                    )
-                rv.blit(renpy.render(TurnstileDisplayable._bg_disp, self.width, self.height, st, at), (0, 0))
-            else:
-                bg_cv = rv.canvas()
-                bg_cv.rect("#0d151e", (0, 0, self.width, self.height))
-
-            ui = renpy.Render(self.width, self.height)
-            canvas = ui.canvas()
-
-            # Левая и правая тумбы турникета (исходные цвета)
-            canvas.rect("#2c3c4cd8", (170, 210, 380, 660))
-            canvas.rect("#4a627a", (170, 210, 380, 660), 5)
-            canvas.rect("#394d60", (190, 210, 340, 44))
-
-            canvas.rect("#2c3c4cd8", (1370, 210, 380, 660))
-            canvas.rect("#4a627a", (1370, 210, 380, 660), 5)
-            canvas.rect("#394d60", (1390, 210, 340, 44))
-
-            is_green = (self.game.light == "green" or self.game.status == "success")
-
-            if self.game.status == "success":
-                canvas.rect("#1e5938", (550, 280, 58, 500))
-                canvas.rect("#1e5938", (1312, 280, 58, 500))
-                canvas.circle("#44ff77", (960, 520), 115)
-                canvas.circle("#133a24", (960, 520), 92)
-                canvas.line("#ffffff", (960, 585), (960, 455), 16)
-                canvas.line("#ffffff", (905, 510), (960, 450), 16)
-                canvas.line("#ffffff", (1015, 510), (960, 450), 16)
-            else:
-                flap_col = "#1f6b3dcc" if is_green else "#752028cc"
-                border_col = "#55ff88" if is_green else "#ff5555"
-                canvas.polygon(flap_col, [(550, 275), (942, 345), (942, 715), (550, 775)])
-                canvas.polygon(border_col, [(550, 275), (942, 345), (942, 715), (550, 775)], 5)
-                canvas.polygon(flap_col, [(1370, 275), (978, 345), (978, 715), (1370, 775)])
-                canvas.polygon(border_col, [(1370, 275), (978, 345), (978, 715), (1370, 775)], 5)
-
-            # Светофор-индикатор на левой тумбе
-            canvas.rect("#111921", (255, 290, 210, 460))
-            canvas.rect("#53687e", (255, 290, 210, 460), 3)
-
-            if not is_green:
-                canvas.circle("#6b1515", (360, 415), 78)
-                canvas.circle("#ff3333", (360, 415), 60)
-                canvas.circle("#ffaaaa", (342, 396), 18)
-            else:
-                canvas.circle("#2e1818", (360, 415), 56)
-
-            if is_green:
-                canvas.circle("#145e28", (360, 625), 78)
-                canvas.circle("#33ff66", (360, 625), 60)
-                canvas.circle("#b8ffcc", (342, 606), 18)
-            else:
-                canvas.circle("#162c1e", (360, 625), 56)
-
-            # Считыватель пропуска на правой тумбе
-            canvas.rect("#16202a", (1430, 290, 260, 460))
-            canvas.rect("#44ff88" if is_green else "#3a88cc", (1430, 290, 260, 460), 4)
-            canvas.circle("#223242", (1560, 470), 74)
-            canvas.circle("#66ff99" if is_green else "#66ccff", (1560, 470), 74, 4)
-            canvas.circle("#66ff99" if is_green else "#66ccff", (1560, 470), 42, 3)
-            canvas.circle("#66ff99" if is_green else "#66ccff", (1560, 470), 14)
+            rv.blit(self._state_layer_render(state_key, st, at), (0, 0))
 
             cx = int(1340 + self.game.card_anim_x * 165)
             cy = int(595 - self.game.card_anim_x * 115)
-            canvas.rect("#0b1015", (cx + 8, cy + 10, 190, 118))
-            canvas.rect("#e8f1f8", (cx, cy, 190, 118))
-            canvas.rect("#1d5fa8", (cx, cy + 16, 190, 26))
-            canvas.rect("#8ca0b5", (cx + 20, cy + 62, 110, 12))
-            canvas.rect("#8ca0b5", (cx + 20, cy + 84, 75, 10))
-            canvas.rect("#336699", (cx, cy, 190, 118), 3)
+            rv.blit(self._card_render(st, at), (cx, cy))
 
             cyc = self.game.cycle_progress()
             for idx in range(14):
@@ -227,12 +225,11 @@ init python:
                 by = 935
                 col = "#33ff66" if idx >= 9 else "#ff4444"
                 if idx == cyc and self.game.status != "success":
-                    canvas.rect("#ffffff", (bx - 4, by - 5, 72, 42))
-                canvas.rect(col if idx <= cyc or self.game.status == "success" else "#202b36", (bx, by, 64, 32))
+                    mg_solid(rv, "#ffffff", bx - 4, by - 5, 72, 42, st, at)
+                mg_solid(rv, col if idx <= cyc or self.game.status == "success" else "#202b36", bx, by, 64, 32, st, at)
 
-            rv.blit(ui, (0, 0))
             if self.game.status != "success":
-                renpy.redraw(self, 0.05)
+                renpy.redraw(self, 0.06)
             return rv
 
         def event(self, ev, x, y, st):
@@ -436,38 +433,151 @@ init python:
 
 
     class VocalStageController(renpy.Displayable):
-        """Полноэкранное сенсорное и мышиное управление школьником на сцене актового зала."""
+        """Единый аппаратно-ускоренный рендерер и контроллер сцены актового зала без restart_interaction шторма."""
         def __init__(self, game, width=1920, height=1080, **kwargs):
             super(VocalStageController, self).__init__(**kwargs)
             self.game = game
             self.width = width
             self.height = height
             self.touching = False
+            self.last_st = None
+            self.tick_acc = 0.0
+            self.was_finished = False
+
+        @staticmethod
+        def _word_badge_render(word_str, st, at):
+            key = ("vocal_word_badge", word_str)
+            # Оценим размер плашки через кэшированный Text
+            t_key = ("txt", word_str, 28, "#ffffff", True, None, 0.0)
+            td = MGTextCache.get(t_key)
+            if td is None:
+                td = Text(word_str, size=28, color="#ffffff", bold=True, substitute=False)
+                MGTextCache.put(t_key, td)
+            tr = renpy.render(td, 1600, 200, st, at)
+            tw, th = tr.get_size()
+            bw, bh = int(tw) + 48, int(th) + 24
+            def _build(r, _st, _at):
+                r.blit(renpy.render(Frame("images/ui/round_vocal_word.png", 18, 18), bw, bh, _st, _at), (0, 0))
+                r.blit(renpy.render(td, 1600, 200, _st, _at), (24, 12))
+            layer = MGStaticLayer.get(key, bw, bh, _build)
+            return renpy.render(layer, bw, bh, st, at), bw, bh
+
+        def _stage_bg_render(self, st, at):
+            def _build(rv, _st, _at):
+                if renpy.loadable("images/mg/vocal_stage_bg.webp"):
+                    rv.blit(renpy.render(Image("images/mg/vocal_stage_bg.webp"), self.width, self.height, _st, _at), (0, 0))
+                else:
+                    mg_solid(rv, "#120c24", 0, 0, self.width, self.height, _st, _at)
+                sp = renpy.Render(self.width, self.height)
+                cv = sp.canvas()
+                cv.polygon("#ffd8661c", [(520, 0), (290, 885), (760, 885)])
+                cv.polygon("#ffffff18", [(960, 0), (720, 885), (1200, 885)])
+                cv.polygon("#ffd8661c", [(1400, 0), (1160, 885), (1630, 885)])
+                rv.blit(sp, (0, 0))
+            layer = MGStaticLayer.get(("vocal_stage_static_bg",), self.width, self.height, _build)
+            return renpy.render(layer, self.width, self.height, st, at)
+
+        @staticmethod
+        def _hud_box_render(st, at):
+            W, H = 1320, 108
+            def _build(r, _st, _at):
+                r.blit(renpy.render(Frame("images/ui/round_vocal_hud.png", 22, 22), W, H, _st, _at), (0, 0))
+            layer = MGStaticLayer.get(("vocal_hud_frame",), W, H, _build)
+            return renpy.render(layer, W, H, st, at)
 
         def render(self, width, height, st, at):
+            g = self.game
+            dt = 0.0 if self.last_st is None else max(0.0, min(0.08, st - self.last_st))
+            self.last_st = st
+
+            if not g.is_finished():
+                self.tick_acc += dt
+                steps = 0
+                while self.tick_acc >= 0.04 and steps < 3:
+                    self.tick_acc -= 0.04
+                    steps += 1
+                    g.update_tick()
+                    if g.is_finished():
+                        break
+
             rv = renpy.Render(self.width, self.height)
-            canvas = rv.canvas()
-            if self.game.penalty_flash > 0:
-                canvas.rect("#ff112238", (0, 0, self.width, self.height))
-            else:
-                canvas.polygon("#ffd8661c", [(520, 0), (290, 885), (760, 885)])
-                canvas.polygon("#ffffff18", [(960, 0), (720, 885), (1200, 885)])
-                canvas.polygon("#ffd8661c", [(1400, 0), (1160, 885), (1630, 885)])
+            rv.blit(self._stage_bg_render(st, at), (0, 0))
+
+            if g.penalty_flash > 0:
+                mg_solid(rv, "#ff112238", 0, 0, self.width, self.height, st, at)
+
+            if not g.is_finished():
+                for item in g.falling_words:
+                    br, bw, bh = self._word_badge_render(item["word"], st, at)
+                    rv.blit(br, (int(item["x"] * self.width - bw // 2), int(item["y"] * 855 - bh // 2)))
+
+                for pop in g.popups:
+                    mg_text(rv, pop["text"], int(pop["x"] * self.width), int(pop["y"] * 855),
+                            32, pop.get("col", "#7ae8ff"), True, align=0.5, st=st, at=at)
+
+            singer_bob = int(abs(math.sin(g.step_phase)) * 10) if not g.is_finished() else 0
+            mg_blit_img(rv, "images/mg/schoolboy_singer.png",
+                        int(g.player_x * self.width), 880 - singer_bob,
+                        184, 260, align_x=0.5, align_y=1.0,
+                        xzoom=(-1.0 if g.facing < 0 else 1.0), st=st, at=at)
+
+            if renpy.loadable("images/mg/vocal_stage_fg.webp"):
+                fg_key = ("img_fg_vocal",)
+                fg_d = MGTextCache.get(fg_key)
+                if fg_d is None:
+                    fg_d = Image("images/mg/vocal_stage_fg.webp")
+                    MGTextCache.put(fg_key, fg_d)
+                rv.blit(renpy.render(fg_d, self.width, self.height, st, at), (0, 0))
+
+            # Телесуфлёр сверху (без пересборки screen)
+            hx = (self.width - 1320) // 2
+            hy = 16
+            rv.blit(self._hud_box_render(st, at), (hx, hy))
+            mg_text(rv, "%d / %d" % (len(g.collected_words), g.target_count),
+                    hx + 32, hy + 18, 25, "#7ae8ff", True, align=0.0, st=st, at=at)
+            if not g.is_finished():
+                mg_text(rv, "«%s»" % g.current_target_phrase(),
+                        self.width // 2, hy + 16, 27, "#ffffff", True, align=0.5, st=st, at=at)
+            mg_text(rv, "Штрафы: %d" % g.mistakes,
+                    hx + 1320 - 32, hy + 18, 24, "#ffffff", True, align=1.0, st=st, at=at)
+            mg_text(rv, g.sung_preview(),
+                    self.width // 2, hy + 62, 21, "#b8e6ff", False, width=1256, align=0.5, st=st, at=at)
+
+            if not g.is_finished():
+                renpy.redraw(self, 0.022)
+            elif not self.was_finished:
+                self.was_finished = True
+                renpy.timeout(0)
             return rv
 
         def event(self, ev, x, y, st):
+            if self.was_finished and self.game.is_finished():
+                self.was_finished = False
+                renpy.restart_interaction()
             if self.game.is_finished():
                 self.touching = False
                 return None
+
+            if ev.type == pygame.KEYDOWN:
+                u = (getattr(ev, "unicode", "") or "").lower()
+                if ev.key in (pygame.K_LEFT, pygame.K_a) or u in ("a", "ф"):
+                    self.game.move_player(-0.055)
+                    renpy.redraw(self, 0)
+                    raise renpy.IgnoreEvent()
+                elif ev.key in (pygame.K_RIGHT, pygame.K_d) or u in ("d", "в"):
+                    self.game.move_player(0.055)
+                    renpy.redraw(self, 0)
+                    raise renpy.IgnoreEvent()
+
             inside = (0 <= x <= self.width and 0 <= y <= self.height)
             if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and inside:
                 self.touching = True
                 self.game.set_player_x(float(x) / float(self.width))
-                renpy.restart_interaction()
+                renpy.redraw(self, 0)
             elif ev.type == pygame.MOUSEMOTION and inside:
                 if self.touching or pygame.mouse.get_pressed()[0]:
                     self.game.set_player_x(float(x) / float(self.width))
-                    renpy.restart_interaction()
+                    renpy.redraw(self, 0)
             elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1:
                 self.touching = False
             return None
@@ -591,76 +701,110 @@ init python:
             self.game = game
             self.width = 1840
             self.height = 860
+            self._beads_sig = None
+            self._beads_layer = None
+            self._hud_sig = None
+
+        def _plate_render(self, stroke_idx, st, at):
+            g = self.game
+            s_key = min(int(stroke_idx), len(g.strokes))
+            def _build(rv, _st, _at):
+                canvas = rv.canvas()
+                canvas.rect("#22272e", (0, 0, self.width, self.height))
+                canvas.rect("#2b323b", (90, 80, self.width - 180, self.height - 160))
+                canvas.rect("#45505e", (90, 80, self.width - 180, self.height - 160), 4)
+                canvas.rect("#3b4450", (14, 14, self.width - 28, self.height - 28), 3)
+
+                for cx, cy in [(56, 56), (self.width - 56, 56), (56, self.height - 56), (self.width - 56, self.height - 56),
+                    (665, 130), (665, 730), (1185, 130), (1185, 730)]:
+                    canvas.circle("#525e6c", (cx, cy), 20)
+                    canvas.circle("#15181c", (cx, cy), 8)
+
+                for s_i, stroke in enumerate(g.strokes):
+                    is_cur_stroke = (s_i == s_key and s_key < len(g.strokes))
+                    groove_center = "#8da6bf" if is_cur_stroke else "#566678"
+                    for i in range(len(stroke) - 1):
+                        canvas.line("#0d1014", stroke[i], stroke[i + 1], 36)
+                        canvas.line("#1b222a", stroke[i], stroke[i + 1], 24)
+                        canvas.line(groove_center, stroke[i], stroke[i + 1], 5)
+            layer = MGStaticLayer.get(("weld_plate_grooves", s_key), self.width, self.height, _build)
+            return renpy.render(layer, self.width, self.height, st, at)
+
+        def _beads_render(self, st, at):
+            g = self.game
+            sig = (g.retries, g.done_segments, len(g.burn_marks), sum(len(ws) for ws in g.welded_strokes))
+            if sig != self._beads_sig or self._beads_layer is None:
+                self._beads_sig = sig
+                def _build(rv, _st, _at):
+                    if not g.burn_marks and not any(len(ws) >= 2 for ws in g.welded_strokes):
+                        return
+                    canvas = rv.canvas()
+                    for bx, by in g.burn_marks:
+                        canvas.circle("#120908", (bx, by), 22)
+                        canvas.circle("#ff442288", (bx, by), 15, 3)
+                    for w_stroke in g.welded_strokes:
+                        for i in range(len(w_stroke) - 1):
+                            p1 = (w_stroke[i][0], w_stroke[i][1])
+                            p2 = (w_stroke[i + 1][0], w_stroke[i + 1][1])
+                            dev = w_stroke[i + 1][2]
+                            col = "#44ff66" if dev <= 14 else ("#ffbb33" if dev <= 26 else "#ff4433")
+                            canvas.line(col, p1, p2, 20)
+                            canvas.circle("#e6ffee" if dev <= 14 else "#ffd8cc", p2, 7)
+                self._beads_layer = MGStaticLayer(self.width, self.height, _build)
+            return renpy.render(self._beads_layer, self.width, self.height, st, at)
+
+        @staticmethod
+        def _target_ring_render(pulse_idx, st, at):
+            S = 72
+            key = ("weld_target_ring", pulse_idx)
+            def _build(r, _st, _at):
+                cv = r.canvas()
+                c = S // 2
+                pulse = 24 + pulse_idx * 4
+                cv.circle("#ffcc00", (c, c), pulse, 4)
+                cv.circle("#ffcc0066", (c, c), 16)
+                cv.circle("#ffffff", (c, c), 6)
+            layer = MGStaticLayer.get(key, S, S, _build)
+            return renpy.render(layer, S, S, st, at)
 
         def render(self, width, height, st, at):
-            rv = renpy.Render(self.width, self.height)
-            canvas = rv.canvas()
             g = self.game
+            rv = renpy.Render(self.width, self.height)
+            rv.blit(self._plate_render(g.stroke_idx, st, at), (0, 0))
+            rv.blit(self._beads_render(st, at), (0, 0))
 
-            # Стальной лист на сварочном столе с накладным трафаретом «ПГТ»
-            canvas.rect("#22272e", (0, 0, self.width, self.height))
-            canvas.rect("#2b323b", (90, 80, self.width - 180, self.height - 160))
-            canvas.rect("#45505e", (90, 80, self.width - 180, self.height - 160), 4)
-            canvas.rect("#3b4450", (14, 14, self.width - 28, self.height - 28), 3)
-
-            # Струбцины и крепёжные болты шаблона
-            for cx, cy in [(56, 56), (self.width - 56, 56), (56, self.height - 56), (self.width - 56, self.height - 56),
-                (665, 130), (665, 730), (1185, 130), (1185, 730)]:
-                canvas.circle("#525e6c", (cx, cy), 20)
-                canvas.circle("#15181c", (cx, cy), 8)
-
-            # Фрезерованные разделки кромок под буквы «П», «Г», «Т»
-            for s_i, stroke in enumerate(g.strokes):
-                is_cur_stroke = (s_i == g.stroke_idx and not g.is_all_welded())
-                groove_center = "#8da6bf" if is_cur_stroke else "#566678"
-                for i in range(len(stroke) - 1):
-                    canvas.line("#0d1014", stroke[i], stroke[i + 1], 36)
-                    canvas.line("#1b222a", stroke[i], stroke[i + 1], 24)
-                    canvas.line(groove_center, stroke[i], stroke[i + 1], 5)
-
-            # Следы прожогов
-            for bx, by in g.burn_marks:
-                canvas.circle("#120908", (bx, by), 22)
-                canvas.circle("#ff442288", (bx, by), 15, 3)
-
-            # Наложенный сварной шов по всем проходам
-            for w_stroke in g.welded_strokes:
-                for i in range(len(w_stroke) - 1):
-                    p1 = (w_stroke[i][0], w_stroke[i][1])
-                    p2 = (w_stroke[i + 1][0], w_stroke[i + 1][1])
-                    dev = w_stroke[i + 1][2]
-                    if dev <= 14:
-                        col = "#44ff66"
-                    elif dev <= 26:
-                        col = "#ffbb33"
-                    else:
-                        col = "#ff4433"
-                    canvas.line(col, p1, p2, 20)
-                    canvas.circle("#e6ffee" if dev <= 14 else "#ffd8cc", p2, 7)
-
-            # Пульсирующая целевая точка электрода
+            # Пульсирующая целевая точка электрода (закэшированный мини-спрайт 72x72)
             if not g.is_all_welded() and not g.failed:
                 tx, ty = g.active_target()
-                pulse = 26 + int(4 * math.sin(st * 8.0))
-                canvas.circle("#ffcc00", (tx, ty), pulse, 4)
-                canvas.circle("#ffcc0066", (tx, ty), 16)
-                canvas.circle("#ffffff", (tx, ty), 6)
+                p_idx = 1 if math.sin(st * 7.0) > 0 else 0
+                rv.blit(self._target_ring_render(p_idx, st, at), (tx - 36, ty - 36))
 
-            # Держатель электрода и сварочная дуга
+            # Держатель электрода и дуга — локальный буфер 240x240 вместо полноэкранного 1840x860!
             if g.is_holding and not g.is_all_welded() and not g.failed:
                 cx, cy = g.cursor_pos
-                canvas.line("#c8cfd8", (cx, cy), (cx + 95, cy - 115), 9)
-                canvas.line("#d97724", (cx + 68, cy - 82), (cx + 125, cy - 150), 18)
-                canvas.circle("#ffffff", (cx, cy), 13)
-                canvas.circle("#ffaa00", (cx, cy), 26, 4)
-                for _ in range(9):
-                    sx = cx + random.randint(-52, 52)
-                    sy = cy + random.randint(-52, 52)
-                    canvas.line("#ffea66", (cx, cy), (sx, sy), 3)
+                arc_rv = renpy.Render(240, 240)
+                acv = arc_rv.canvas()
+                ox, oy = 70, 170
+                acv.line("#c8cfd8", (ox, oy), (ox + 95, oy - 115), 9)
+                acv.line("#d97724", (ox + 68, oy - 82), (ox + 125, oy - 150), 18)
+                acv.circle("#ffffff", (ox, oy), 13)
+                acv.circle("#ffaa00", (ox, oy), 26, 4)
+                for _ in range(7):
+                    sx = max(4, min(236, ox + random.randint(-48, 48)))
+                    sy = max(4, min(236, oy + random.randint(-48, 48)))
+                    acv.line("#ffea66", (ox, oy), (sx, sy), 3)
+                rv.blit(arc_rv, (cx - ox, cy - oy))
 
             if not g.is_all_welded() and not g.failed:
                 renpy.redraw(self, 0.05)
             return rv
+
+        def _sync_hud_if_needed(self):
+            g = self.game
+            sig = (g.progress_percent(), int(g.points), g.failed, g.is_all_welded())
+            if sig != self._hud_sig:
+                self._hud_sig = sig
+                renpy.restart_interaction()
 
         def event(self, ev, x, y, st):
             g = self.game
@@ -671,7 +815,8 @@ init python:
 
             if ev.type == pygame.MOUSEBUTTONDOWN and ev.button == 1 and inside:
                 tx, ty = g.active_target()
-                if math.hypot(x - tx, y - ty) <= 58:
+                start_tol = 78 if renpy.variant("touch") else 62
+                if math.hypot(x - tx, y - ty) <= start_tol:
                     g.is_holding = True
                     g.hold_still_ticks = 0
                     g.cursor_pos = (int(x), int(y))
@@ -681,14 +826,14 @@ init python:
                     g.status_msg = "Начинайте сварку точно в жёлтом кольце активного шва!"
                     g.status_col = "#ffcc44"
                 renpy.redraw(self, 0)
-                renpy.restart_interaction()
+                self._sync_hud_if_needed()
                 return None
 
             elif ev.type == pygame.MOUSEMOTION and g.is_holding and inside:
                 g.cursor_pos = (int(x), int(y))
                 self._process_weld(int(x), int(y), st)
                 renpy.redraw(self, 0)
-                renpy.restart_interaction()
+                self._sync_hud_if_needed()
                 return None
 
             elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1:
@@ -701,7 +846,7 @@ init python:
                         g.status_col = "#ffaa44"
                         g.spend(3.5)
                     renpy.redraw(self, 0)
-                    renpy.restart_interaction()
+                    self._sync_hud_if_needed()
                 return None
 
             return None
@@ -715,9 +860,14 @@ init python:
             tx, ty = stroke[g.pt_idx]
             dist_cur = math.hypot(x - tx, y - ty)
 
+            is_touch = renpy.variant("touch")
+            start_r = 78 if is_touch else 58
+            break_r = 82 if is_touch else 62
+            step_r = 52 if is_touch else 40
+
             # Первая точка линии (поджиг дуги)
             if g.pt_idx == 0:
-                if dist_cur <= 52:
+                if dist_cur <= start_r:
                     dev = int(dist_cur)
                     g.welded_strokes[g.stroke_idx].append((int(x), int(y), dev))
                     g.pt_idx = 1
@@ -728,9 +878,9 @@ init python:
                     g.status_col = "#66ff88"
                 return
 
-            # Ужесточение: увод руки дальше 56 px от текущей/предыдущей точки срывает дугу с прожогом!
+            # Ужесточение: увод руки слишком далеко от текущей/предыдущей точки срывает дугу с прожогом!
             px_prev, py_prev = stroke[g.pt_idx - 1]
-            if dist_cur > 62 and math.hypot(x - px_prev, y - py_prev) > 62:
+            if dist_cur > break_r and math.hypot(x - px_prev, y - py_prev) > break_r:
                 g.is_holding = False
                 g.burn_marks.append((x, y))
                 play_sfx("audio/electric_shock.wav")
@@ -746,7 +896,7 @@ init python:
                 stroke = g.strokes[g.stroke_idx]
                 tx, ty = stroke[g.pt_idx]
                 d = math.hypot(x - tx, y - ty)
-                if d <= 40:
+                if d <= step_r:
                     # Отклонение по нормали к отрезку шва
                     ax, ay = stroke[g.pt_idx - 1]
                     seg_len = max(1.0, math.hypot(tx - ax, ty - ay))
@@ -808,7 +958,7 @@ init python:
         ("mining", "Горное дело (5)"),
         ("energy", "Энергетика (4)"),
         ("mech", "Сварка и станки (3)"),
-        ("service", "Повара и право (5)"),
+        ("service", "Сервис и право (5)"),
     ]
 
     PGT_ALL_SPECIALTIES = [
@@ -935,7 +1085,7 @@ init python:
         },
         {
             "id": "21.02.17", "cat": "mining",
-            "short": "Подземная разработка (ПРМПИ)",
+            "short": "Подземная разработка",
             "title": "21.02.17 Подземная разработка месторождений полезных ископаемых",
             "qual": "Специалист по горным работам",
             "term": "Очно (9 кл.) — 3 года 10 мес. • Заочно (11 кл.) — 3 года 10 мес.",
@@ -1206,7 +1356,7 @@ init python:
             {
                 "spec_id": "21.02.17",
                 "cat": "mining",
-                "label": "Подземная разработка (21.02.17 ПРМПИ)",
+                "label": "Подземная разработка (21.02.17)",
                 "prof_title": "Специалист по горным работам",
                 "score": mine_score,
                 "reason": "Хладнокровие в учебном штреке, точный расчёт зарядов и прорыв сквозь завалы породы выдают в тебе прирождённого горняка Кузбасса!",
@@ -1359,71 +1509,15 @@ screen screen_minigame_turnstile():
 screen screen_minigame_vocal():
     modal True
 
-    if not mg_vocal.is_finished():
-        timer 0.04 action Function(mg_vocal.update_tick) repeat True
-    else:
+    if mg_vocal.is_finished():
         timer 1.5 action Return(True)
-
-    key "K_LEFT" action Function(mg_vocal.move_player, -0.055)
-    key "K_RIGHT" action Function(mg_vocal.move_player, 0.055)
-    key "a" action Function(mg_vocal.move_player, -0.055)
-    key "d" action Function(mg_vocal.move_player, 0.055)
-    key "A" action Function(mg_vocal.move_player, -0.055)
-    key "D" action Function(mg_vocal.move_player, 0.055)
-    key "ф" action Function(mg_vocal.move_player, -0.055)
-    key "в" action Function(mg_vocal.move_player, 0.055)
-    key "Ф" action Function(mg_vocal.move_player, -0.055)
-    key "В" action Function(mg_vocal.move_player, 0.055)
 
     fixed:
         xsize 1920
         ysize 1080
 
-        add "images/mg/vocal_stage_bg.png"
         add VocalStageController(mg_vocal, 1920, 1080)
-
-        if not mg_vocal.is_finished():
-            for item in mg_vocal.falling_words:
-                frame:
-                    background Frame("images/ui/round_vocal_word.png", 18, 18)
-                    xpos int(item["x"] * 1920)
-                    xanchor 0.5
-                    ypos int(item["y"] * 855)
-                    yanchor 0.5
-                    padding (24, 12)
-                    text item["word"] size 28 color "#ffffff" bold True
-
-            for pop in mg_vocal.popups:
-                text pop["text"] size 32 color "#7ae8ff" bold True xpos int(pop["x"] * 1920) xanchor 0.5 ypos int(pop["y"] * 855)
-
-        $ singer_bob = int(abs(math.sin(mg_vocal.step_phase)) * 10) if not mg_vocal.is_finished() else 0
-        add Transform("images/mg/schoolboy_singer.png", size=(184, 260), fit="contain", xzoom=(-1.0 if mg_vocal.facing < 0 else 1.0)):
-            xpos int(mg_vocal.player_x * 1920)
-            xanchor 0.5
-            ypos (880 - singer_bob)
-            yanchor 1.0
-
-        add "images/mg/vocal_stage_fg.png"
         add Transform("images/ui/logo_pgt_white.png", size=(116, 116), fit="contain") xpos 28 ypos 20
-
-        # Лаконичный скруглённый телесуфлёр в стиле Persona 3 Reload с общим собранным текстом
-        frame:
-            xalign 0.5
-            ypos 16
-            xsize 1320
-            background Frame("images/ui/round_vocal_hud.png", 22, 22)
-            padding (32, 14)
-            vbox:
-                spacing 8
-                xfill True
-                fixed:
-                    xfill True
-                    ysize 36
-                    text "[len(mg_vocal.collected_words)] / [mg_vocal.target_count]" size 25 color "#7ae8ff" bold True xalign 0.0 yalign 0.5
-                    if not mg_vocal.is_finished():
-                        text ("«" + mg_vocal.current_target_phrase() + "»") size 27 color "#ffffff" bold True xalign 0.5 yalign 0.5
-                    text "Штрафы: [mg_vocal.mistakes]" size 24 color "#ffffff" bold True xalign 1.0 yalign 0.5
-                text mg_vocal.sung_preview() size 21 color "#b8e6ff" xalign 0.5 text_align 0.5
 
         # Полупрозрачная табличка посередине экрана по всей ширине (как в сборке сайта)
         if mg_vocal.is_finished():
@@ -1461,8 +1555,8 @@ screen screen_minigame_weld():
         xsize 1920
         ysize 1080
 
-        if renpy.loadable("images/bg/pgt_welding_workshop.png"):
-            add Transform("images/bg/pgt_welding_workshop.png", size=(1920, 1080), fit="cover", matrixcolor=BrightnessMatrix(-0.58))
+        if renpy.loadable("images/bg/pgt_welding_workshop.webp"):
+            add Transform("images/bg/pgt_welding_workshop.webp", size=(1920, 1080), fit="cover", matrixcolor=BrightnessMatrix(-0.58))
         else:
             add Solid("#05102a")
 
@@ -1616,9 +1710,9 @@ screen screen_career_result():
                                     ysize 112
                                     yalign 0.5
                                     if gold_attestat_found:
-                                        add Transform("images/mg/true_gold_atestato.png", size=(78, 110), fit="contain") xalign 0.5 yalign 0.5
+                                        add Transform("images/mg/true_gold_atestato.webp", size=(78, 110), fit="contain") xalign 0.5 yalign 0.5
                                     else:
-                                        add Transform("images/mg/true_gold_atestato.png", size=(78, 110), fit="contain", matrixcolor=TintMatrix("#161b24") * BrightnessMatrix(-0.45)) xalign 0.5 yalign 0.5
+                                        add Transform("images/mg/true_gold_atestato.webp", size=(78, 110), fit="contain", matrixcolor=TintMatrix("#161b24") * BrightnessMatrix(-0.45)) xalign 0.5 yalign 0.5
                                         add Transform("images/ui/lock_icon.png", size=(42, 42), fit="contain") xalign 0.5 yalign 0.5
 
                                 vbox:
@@ -1786,14 +1880,13 @@ screen screen_pgt_presentation():
                         padding (38, 30)
 
                         vbox:
-                            spacing 14
+                            spacing 0
                             xsize 1102
 
-                            text cur_spec["title"] size 30 color "#7ae8ff" bold True line_spacing 4
-                            text ("Квалификация: " + cur_spec["qual"]) size 24 color "#ffffff" bold True line_spacing 4
-                            text ("Срок и форма обучения: " + cur_spec["term"]) size 22 color "#b8e6ff"
-                            null height 4
-                            text cur_spec["desc"] size 23 color "#f0f7ff" line_spacing 6
+                            text cur_spec["title"] size 26 color "#ffffff" bold True line_spacing 6
+                            text ("Квалификация: " + cur_spec["qual"]) size 24 color "#ffffff" line_spacing 6
+                            text ("Срок и форма обучения: " + cur_spec["term"]) size 24 color "#ffffff" line_spacing 6
+                            text cur_spec["desc"] size 24 color "#ffffff" line_spacing 6
 
 # ------------------------------------------------------------------------------
 # ЭКРАН 7В: ОТДЕЛЬНОЕ ОКНО КОНТАКТНЫХ ДАННЫХ И ССЫЛОК ПОСЛЕ БРОШЮРЫ
@@ -1810,7 +1903,7 @@ screen screen_pgt_contacts():
             xalign 0.5
             yalign 0.5
             xsize 1320
-            ysize 720
+            ysize 740
             background Frame("images/ui/round_outer_bg.png", 32, 32)
             padding (54, 44)
 
@@ -1855,41 +1948,47 @@ screen screen_pgt_contacts():
                 hbox:
                     xsize 1212
                     spacing 24
-                    textbutton "pgt.kemobl.ru":
+                    button:
                         xsize 388
+                        ysize 72
                         action OpenURL("https://pgt.kemobl.ru/")
                         background Frame("images/ui/round_link_idle.png", 18, 18)
                         hover_background Frame("images/ui/round_link_hover.png", 18, 18)
-                        padding (24, 18)
-                        text_size 25
-                        text_color "#ffffff"
-                        text_hover_color "#ffffff"
-                        text_bold True
-                        text_xalign 0.5
-                    textbutton "vk.com/pgt_romanov":
+                        padding (18, 14)
+                        hbox:
+                            spacing 14
+                            xalign 0.5
+                            yalign 0.5
+                            add Transform("images/ui/icon_web.png", size=(40, 40), fit="contain") yalign 0.5
+                            text "pgt.kemobl.ru" size 24 color "#ffffff" bold True yalign 0.5
+                    button:
                         xsize 388
+                        ysize 72
                         action OpenURL("https://vk.com/pgt_romanov")
                         background Frame("images/ui/round_link_idle.png", 18, 18)
                         hover_background Frame("images/ui/round_link_hover.png", 18, 18)
-                        padding (24, 18)
-                        text_size 25
-                        text_color "#ffffff"
-                        text_hover_color "#ffffff"
-                        text_bold True
-                        text_xalign 0.5
-                    textbutton "MAX":
+                        padding (18, 14)
+                        hbox:
+                            spacing 14
+                            xalign 0.5
+                            yalign 0.5
+                            add Transform("images/ui/icon_vk.png", size=(40, 40), fit="contain") yalign 0.5
+                            text "vk.com/pgt_romanov" size 23 color "#ffffff" bold True yalign 0.5
+                    button:
                         xsize 388
+                        ysize 72
                         action OpenURL("https://max.ru/id4223000033_gos")
                         background Frame("images/ui/round_link_idle.png", 18, 18)
                         hover_background Frame("images/ui/round_link_hover.png", 18, 18)
-                        padding (24, 18)
-                        text_size 25
-                        text_color "#ffffff"
-                        text_hover_color "#ffffff"
-                        text_bold True
-                        text_xalign 0.5
+                        padding (18, 14)
+                        hbox:
+                            spacing 14
+                            xalign 0.5
+                            yalign 0.5
+                            add Transform("images/ui/icon_max.png", size=(40, 40), fit="contain") yalign 0.5
+                            text "MAX" size 25 color "#ffffff" bold True yalign 0.5
 
-                textbutton "Завершить":
+                textbutton ("Пройти заново" if renpy.variant("web") else "Завершить"):
                     xsize 1212
                     yalign 1.0
                     action Return(True)
@@ -1962,7 +2061,11 @@ init python:
 
     def cheat_jump_to(target_label):
         renpy.store.cheat_panel_open = False
+        renpy.store.quick_menu = False
         renpy.store.gold_attestat_popup = False
+        renpy.game.preferences.volumes['music'] = 0.50
+        renpy.game.preferences.volumes['sfx'] = 0.65
+        renpy.game.preferences.volumes['voice'] = 1.0
         renpy.hide_screen("screen_gold_attestat_hotspot")
         renpy.hide_screen("screen_info_stand")
         renpy.music.stop(channel="music", fadeout=0.2)
@@ -2234,7 +2337,7 @@ screen screen_info_stand():
         xsize 1920
         ysize 1080
 
-        add "images/bg/info_stand.png"
+        add "images/bg/info_stand.webp"
         add Transform("images/ui/logo_pgt_black.png", size=(116, 116), fit="contain") xpos 28 ypos 20
 
         # Слева под небольшим углом — фото apreshen («Этому Поганцу вход на кухню запрещён»)
@@ -2242,12 +2345,20 @@ screen screen_info_stand():
             xpos 518
             ypos 582
             anchor (0.5, 0.5)
-        add Transform("images/mg/apreshen.png", size=(340, 415), fit="contain", rotate=-7.0, subpixel=True):
+        add Transform("images/mg/apreshen.webp", size=(340, 415), fit="contain", rotate=-7.0, subpixel=True):
             xpos 510
             ypos 572
             anchor (0.5, 0.5)
 
-        # Справа на стенде оставлено свободное место под будущее фото (x ~ 1210..1650)
+        # Справа на стенде — фото медиацентра под небольшим углом
+        add Transform(Solid("#1a0e0666", xsize=420, ysize=315), rotate=5.0, subpixel=True):
+            xpos 1418
+            ypos 582
+            anchor (0.5, 0.5)
+        add Transform("images/mg/media_center.webp", size=(420, 315), fit="contain", rotate=5.0, subpixel=True):
+            xpos 1410
+            ypos 572
+            anchor (0.5, 0.5)
 
         # Посередине — золотой аттестат без белого фона (кликабелен)
         add Solid("#1a0e0670", xsize=380, ysize=546):
@@ -2260,8 +2371,8 @@ screen screen_info_stand():
                 xpos 960
                 ypos 564
                 anchor (0.5, 0.5)
-                idle Transform("images/mg/true_gold_atestato.png", size=(380, 546), fit="contain")
-                hover Transform("images/mg/true_gold_atestato.png", size=(380, 546), fit="contain")
+                idle Transform("images/mg/true_gold_atestato.webp", size=(380, 546), fit="contain")
+                hover Transform("images/mg/true_gold_atestato.webp", size=(380, 546), fit="contain")
                 at gold_cert_center_hover
                 action [
                     SetVariable("gold_attestat_found", True),
@@ -2280,7 +2391,7 @@ screen screen_info_stand():
                 text_bold True
                 text_color "#ffffff"
         else:
-            add Transform("images/mg/true_gold_atestato.png", size=(380, 546), fit="contain"):
+            add Transform("images/mg/true_gold_atestato.webp", size=(380, 546), fit="contain"):
                 xpos 960
                 ypos 564
                 anchor (0.5, 0.5)
@@ -2310,7 +2421,7 @@ screen screen_info_stand():
 
                 # У левого края таблички — кружащаяся жёлтая многоконечная звезда + покачивающийся аттестат
                 add Transform("images/ui/turnip_star.png", size=(390, 390), fit="contain") at turnip_star_spin(205, 230)
-                add Transform("images/mg/true_gold_atestato.png", size=(182, 261), fit="contain") at turnip_item_rock(205, 230)
+                add Transform("images/mg/true_gold_atestato.webp", size=(182, 261), fit="contain") at turnip_item_rock(205, 230)
 
                 # Текст на табличке справа от звезды
                 fixed:

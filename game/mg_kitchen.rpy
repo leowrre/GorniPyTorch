@@ -25,6 +25,7 @@ init python:
             (1030, 725, 230, 125, "РАЗДЕЛКА", "images/mg/equip_prep.png"),
             (1335, 340, 105, 280, "ХОЛОД.", "images/mg/equip_fridge.png"),
         ]
+        OBST_BOXES = [(ox, oy, ox + ow, oy + oh) for (ox, oy, ow, oh, _n, _sp) in OBST]
 
         # Все продукты разложены на столах/плите/холодильнике (есть нужные и ловушки!)
         INGR = [
@@ -111,14 +112,50 @@ init python:
                     return True
             return False
 
+        def ray_dist(self, cx, cy, ca, sa, max_r):
+            """Аналитическое O(1) пересечение луча со стенами и столами (без пошаговых циклов)."""
+            best = float(max_r)
+            inv_x = (1.0 / ca) if abs(ca) > 1e-6 else 1e9
+            inv_y = (1.0 / sa) if abs(sa) > 1e-6 else 1e9
+            if ca > 1e-6:
+                bw = (self.W - cx) * inv_x
+                if bw < best:
+                    best = bw
+            elif ca < -1e-6:
+                bw = -cx * inv_x
+                if bw < best:
+                    best = bw
+            if sa > 1e-6:
+                bh = (self.H - cy) * inv_y
+                if bh < best:
+                    best = bh
+            elif sa < -1e-6:
+                bh = -cy * inv_y
+                if bh < best:
+                    best = bh
+            for (ox, oy, ox2, oy2) in self.OBST_BOXES:
+                tx1 = (ox - cx) * inv_x
+                tx2 = (ox2 - cx) * inv_x
+                tmin = tx1 if tx1 < tx2 else tx2
+                tmax = tx2 if tx1 < tx2 else tx1
+                ty1 = (oy - cy) * inv_y
+                ty2 = (oy2 - cy) * inv_y
+                if ty1 > ty2:
+                    ty1, ty2 = ty2, ty1
+                if tmin < ty1:
+                    tmin = ty1
+                if tmax > ty2:
+                    tmax = ty2
+                if tmax >= tmin and tmax > 0.0 and 0.0 < tmin < best:
+                    best = tmin
+            return max(4.0, best)
+
         def los(self, x0, y0, x1, y1):
-            d = math.hypot(x1 - x0, y1 - y0)
-            n = int(d / 12) + 1
-            for k in range(1, n):
-                t = k / float(n)
-                if self.point_blocked(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t):
-                    return False
-            return True
+            dx, dy = x1 - x0, y1 - y0
+            d = math.hypot(dx, dy)
+            if d < 1.0:
+                return True
+            return self.ray_dist(x0, y0, dx / d, dy / d, d) >= d - 1.5
 
         def sees(self, i, px, py):
             ck = self.cooks[i]
@@ -134,25 +171,6 @@ init python:
             if diff > self.HALF_FOV + self.PR / d:
                 return False
             return self.los(ck["x"], ck["y"], px, py)
-
-        def vision_poly(self, i):
-            """Конус обзора, обрезанный столами и плитой."""
-            ck = self.cooks[i]
-            rng = self.COOKS[i].get("range", 300)
-            pts = [(ck["x"], ck["y"])]
-            rays = 18
-            for k in range(rays + 1):
-                a = ck["ang"] - self.HALF_FOV + 2 * self.HALF_FOV * k / float(rays)
-                ca, sa = math.cos(a), math.sin(a)
-                dist = 0.0
-                while dist < rng:
-                    nd = dist + 14.0
-                    x, y = ck["x"] + ca * nd, ck["y"] + sa * nd
-                    if self.point_blocked(x, y) or not (0 <= x <= self.W and 0 <= y <= self.H):
-                        break
-                    dist = nd
-                pts.append((ck["x"] + ca * dist, ck["y"] + sa * dist))
-            return pts
 
         def caught(self, i):
             self.cooks[i]["alert"] = 1.5
@@ -283,7 +301,14 @@ init python:
 
     class KitchenStealDisplayable(renpy.Displayable):
         TOP = 58
-        _bg_cache = None
+        CONE_SLICES = 8
+        CONE_BASE_LEN = 340.0
+        CONE_HALF_H = 24
+        _room_gpu_tex = None
+        _wedge_norm_tex = None
+        _wedge_alert_tex = None
+        _ring_need_tex = None
+        _ring_extra_tex = None
 
         def __init__(self, game, **kwargs):
             super(KitchenStealDisplayable, self).__init__(**kwargs)
@@ -291,6 +316,111 @@ init python:
             self.W = game.W
             self.H = game.H + self.TOP
             self.last_st = None
+            self._init_gpu_textures()
+
+        def _init_gpu_textures(self):
+            g = self.game
+            T = self.TOP
+            W, H_tot = self.W, self.H
+
+            if KitchenStealDisplayable._room_gpu_tex is None:
+                def _draw_room(surf, cv):
+                    cv.rect("#181f26", (0, 0, W, T))
+                    tile = 80
+                    for yy in range(0, g.H, tile):
+                        for xx in range(0, g.W, tile):
+                            tw = min(tile, g.W - xx)
+                            th = min(tile, g.H - yy)
+                            cv.rect("#3b444c" if ((xx // tile + yy // tile) % 2 == 0) else "#333b42", (xx, T + yy, tw, th))
+                    try:
+                        if mg_loadable("images/bg/pgt_culinary_hall.webp"):
+                            with renpy.loader.load("images/bg/pgt_culinary_hall.webp", directory="images") as f:
+                                bg_s = renpy.display.pgrender.load_image(f, "pgt_culinary_hall.webp")
+                            bg_s = renpy.display.scale.smoothscale(bg_s, (W, g.H))
+                            am = renpy.display.pgrender.surface((W, g.H), True)
+                            am.fill((255, 255, 255, 56))
+                            bg_s.blit(am, (0, 0), None, renpy.pygame.BLEND_RGBA_MULT)
+                            surf.blit(bg_s, (0, T))
+                    except Exception:
+                        pass
+                    for (ox, oy, ow, oh, _name, sp_path) in g.OBST:
+                        cv.rect("#0f1419aa", (ox + 7, T + oy + 9, ow, oh))
+                        loaded_sp = False
+                        try:
+                            if mg_loadable(sp_path):
+                                with renpy.loader.load(sp_path, directory="images") as f:
+                                    sp_s = renpy.display.pgrender.load_image(f, sp_path)
+                                sw, sh = sp_s.get_size()
+                                sc = min(float(ow) / float(sw), float(oh) / float(sh))
+                                nw, nh = max(1, int(round(sw * sc))), max(1, int(round(sh * sc)))
+                                sp_s = renpy.display.scale.smoothscale(sp_s, (nw, nh))
+                                surf.blit(sp_s, (ox + (ow - nw) // 2, T + oy + (oh - nh) // 2))
+                                loaded_sp = True
+                        except Exception:
+                            loaded_sp = False
+                        if not loaded_sp:
+                            cv.rect("#788694", (ox, T + oy, ow, oh))
+                            cv.rect("#cfd8e0", (ox + 6, T + oy + 6, ow - 12, oh - 12))
+                KitchenStealDisplayable._room_gpu_tex = MGGpuCanvas("kitchen_baked_room_v2", W, H_tot, _draw_room)
+
+            if KitchenStealDisplayable._wedge_norm_tex is None:
+                half_ang = g.HALF_FOV / float(self.CONE_SLICES)
+                wy = max(4, int(math.ceil(self.CONE_BASE_LEN * math.tan(half_ang * 1.03))))
+                hh = self.CONE_HALF_H
+                blen = int(self.CONE_BASE_LEN)
+                pts = [(0, hh), (blen, max(0, hh - wy)), (blen, min(hh * 2 - 1, hh + wy))]
+                KitchenStealDisplayable._wedge_norm_tex = MGGpuCanvas(
+                    "kitchen_wedge_norm", blen, hh * 2,
+                    lambda _s, cv, _p=pts: cv.polygon("#ff3b3b52", _p)
+                )
+                KitchenStealDisplayable._wedge_alert_tex = MGGpuCanvas(
+                    "kitchen_wedge_alert", blen, hh * 2,
+                    lambda _s, cv, _p=pts: cv.polygon("#ff181888", _p)
+                )
+
+            if KitchenStealDisplayable._ring_need_tex is None:
+                KitchenStealDisplayable._ring_need_tex = MGGpuCanvas(
+                    "kitchen_ring_need", 86, 86,
+                    lambda _s, cv: cv.circle("#ffdd55", (43, 43), 40, 3)
+                )
+                KitchenStealDisplayable._ring_extra_tex = MGGpuCanvas(
+                    "kitchen_ring_extra", 86, 86,
+                    lambda _s, cv: cv.circle("#ff554488", (43, 43), 36, 2)
+                )
+
+        def _blit_vision_cones_gpu(self, rv, st, at):
+            g = self.game
+            T = self.TOP
+            slices = self.CONE_SLICES
+            step_ang = (2.0 * g.HALF_FOV) / float(slices)
+            start_off = -g.HALF_FOV + 0.5 * step_ang
+            base_len = self.CONE_BASE_LEN
+            hh = float(self.CONE_HALF_H)
+            blen_i = int(base_len)
+            hh2_i = int(hh * 2)
+
+            r_norm = renpy.render(KitchenStealDisplayable._wedge_norm_tex, blen_i, hh2_i, st, at)
+            r_alert = renpy.render(KitchenStealDisplayable._wedge_alert_tex, blen_i, hh2_i, st, at)
+
+            for i, ck in enumerate(g.cooks):
+                cx, cy = ck["x"], ck["y"]
+                sy = T + cy
+                rng = g.COOKS[i].get("range", 300)
+                w_rend = r_alert if ck["alert"] > 0 else r_norm
+                base_a = ck["ang"] + start_off
+                for s_idx in range(slices):
+                    a = base_a + s_idx * step_ang
+                    ca, sa = math.cos(a), math.sin(a)
+                    dist = g.ray_dist(cx, cy, ca, sa, rng)
+                    sc = max(0.03, dist / base_len)
+                    inv_sc = 1.0 / sc
+                    rev = Matrix2D(ca * sc, -sa * sc, sa * sc, ca * sc)
+                    fwd = Matrix2D(ca * inv_sc, sa * inv_sc, -sa * inv_sc, ca * inv_sc)
+                    wr = renpy.Render(0, 0)
+                    wr.forward = fwd
+                    wr.reverse = rev
+                    wr.subpixel_blit(w_rend, (sa * sc * hh, -ca * sc * hh))
+                    rv.subpixel_blit(wr, (cx, sy))
 
         def render(self, width, height, st, at):
             g = self.game
@@ -300,101 +430,48 @@ init python:
             T = self.TOP
 
             rv = renpy.Render(self.W, self.H)
-            floor = renpy.Render(self.W, self.H)
-            fc = floor.canvas()
-            fc.rect("#181f26", (0, 0, self.W, T))
+            # 1 постоянный WebGL-квад для всего зала, плитки, теней и оборудования (0 canvas() на кадре!)
+            rv.blit(renpy.render(KitchenStealDisplayable._room_gpu_tex, self.W, self.H, st, at), (0, 0))
 
-            # Светлая кафельная плитка учебного кулинарного цеха ПГТ + фото-подложка
-            tile = 80
-            for yy in range(0, g.H, tile):
-                for xx in range(0, g.W, tile):
-                    w = min(tile, g.W - xx)
-                    h = min(tile, g.H - yy)
-                    fc.rect("#3b444c" if ((xx // tile + yy // tile) % 2 == 0) else "#333b42", (xx, T + yy, w, h))
-            if renpy.loadable("images/bg/pgt_culinary_hall.png"):
-                if KitchenStealDisplayable._bg_cache is None:
-                    KitchenStealDisplayable._bg_cache = Transform(
-                        "images/bg/pgt_culinary_hall.png",
-                        size=(self.W, g.H),
-                        fit="cover",
-                        alpha=0.22
-                    )
-                floor.blit(renpy.render(KitchenStealDisplayable._bg_cache, self.W, g.H, st, at), (0, T))
+            for (ox, oy, ow, oh, name, _sp) in g.OBST:
+                mg_text(rv, name, ox + ow // 2, T + oy + oh // 2 - 12, 19, "#16202a", True, align=0.5, st=st, at=at)
 
-            # Дверь слева
+            # Дверь слева (через GPU Solid)
             door_col = "#2fbf71" if g.has_all() else "#b87a44"
-            fc.rect(door_col, (0, T + 390, 26, 180))
+            mg_solid(rv, door_col, 0, T + 390, 26, 180, st, at)
             if g.has_all() and int(g.time * 5) % 2 == 0:
-                fc.rect("#99ffcc", (0, T + 390, 26, 180), 4)
-            rv.blit(floor, (0, 0))
+                mg_solid(rv, "#99ffcc", 22, T + 390, 4, 180, st, at)
+            mg_text(rv, "ВЫХОД", 36, T + 466, 22, "#88ffbb" if g.has_all() else "#ffe0b2", True, st=st, at=at)
 
-            # Конусы обзора поваров
-            cones = renpy.Render(self.W, self.H)
-            cc = cones.canvas()
-            for i, ck in enumerate(g.cooks):
-                poly = [(x, y + T) for (x, y) in g.vision_poly(i)]
-                cc.polygon("#ff181888" if ck["alert"] > 0 else "#ff3b3b52", mg_pts(poly))
-            rv.blit(cones, (0, 0))
+            # Конусы обзора поваров — 100% на GPU через Matrix2D (0 canvas(), 0 glTexImage2D!)
+            self._blit_vision_cones_gpu(rv, st, at)
 
-            # Спрайты кухонного оборудования (или детализированная нержавейка)
-            objs = renpy.Render(self.W, self.H)
-            oc = objs.canvas()
-            for (ox, oy, ow, oh, name, sp_path) in g.OBST:
-                oc.rect("#0f1419aa", (ox + 7, T + oy + 9, ow, oh))
-                if renpy.loadable(sp_path):
-                    mg_blit_img(objs, sp_path, ox + ow // 2, T + oy + oh // 2, ow, oh, st=st, at=at)
-                else:
-                    if name == "ПЛИТА":
-                        oc.rect("#2f353d", (ox, T + oy, ow, oh))
-                        oc.rect("#656e7a", (ox + 6, T + oy + 6, ow - 12, oh - 12))
-                        for (bx, by) in [(ox + 58, oy + 65), (ox + ow - 58, oy + 65),
-                                         (ox + 58, oy + oh - 65), (ox + ow - 58, oy + oh - 65)]:
-                            oc.circle("#181b20", (bx, T + by), 32)
-                            oc.circle("#ff5522", (bx, T + by), 22, 4)
-                    elif name == "ХОЛОД.":
-                        oc.rect("#7b90a2", (ox, T + oy, ow, oh))
-                        oc.rect("#dce7f0", (ox + 6, T + oy + 6, ow - 12, oh - 12))
-                    elif name == "МОЙКА":
-                        oc.rect("#6c7d8c", (ox, T + oy, ow, oh))
-                        oc.rect("#b8cad8", (ox + 6, T + oy + 6, ow - 12, oh - 12))
-                        oc.rect("#4a6880", (ox + 26, T + oy + 22, 92, 82))
-                        oc.rect("#4a6880", (ox + 132, T + oy + 22, 92, 82))
-                    else:
-                        oc.rect("#788694", (ox, T + oy, ow, oh))
-                        oc.rect("#cfd8e0", (ox + 6, T + oy + 6, ow - 12, oh - 12))
-                mg_text(objs, name, ox + ow // 2, T + oy + oh // 2 - 12, 19, "#16202a", True, align=0.5, st=st, at=at)
-
-            mg_text(objs, "ВЫХОД", 36, T + 466, 22, "#88ffbb" if g.has_all() else "#ffe0b2", True, st=st, at=at)
-
-            # PNG-спрайты продуктов на столах
+            # Спрайты продуктов на столах
+            r_need = renpy.render(KitchenStealDisplayable._ring_need_tex, 86, 86, st, at)
+            r_extra = renpy.render(KitchenStealDisplayable._ring_extra_tex, 86, 86, st, at)
             for it in g.INGR:
                 if it["id"] in g.collected:
                     continue
                 bob = int(3 * math.sin(g.time * 4.0 + it["x"] * 0.05))
                 ix, iy = int(it["x"]), int(T + it["y"] + bob)
-                if it["need"]:
-                    oc.circle("#ffdd55", (ix, iy), 40, 3)
-                else:
-                    oc.circle("#ff554488", (ix, iy), 36, 2)
-                mg_blit_img(objs, "images/mg/ingr_%s.png" % it["id"], ix, iy, 74, 74, st=st, at=at)
+                rv.blit(r_need if it["need"] else r_extra, (ix - 43, iy - 43))
+                mg_blit_img(rv, "images/mg/ingr_%s.png" % it["id"], ix, iy, 74, 74, st=st, at=at)
 
-            # PNG-спрайты поваров (повёрнуты по взгляду)
+            # Спрайты поваров (вращение через Matrix2D без Transform!)
             for ck in g.cooks:
                 cx, cy = int(ck["x"]), int(T + ck["y"])
-                mg_blit_img(objs, "images/mg/cook_sprite.png", cx, cy, 102, 102,
+                mg_blit_img(rv, "images/mg/cook_sprite.png", cx, cy, 102, 102,
                             rotate=math.degrees(ck["ang"]), st=st, at=at)
                 if ck["alert"] > 0:
-                    mg_text(objs, "!", cx, cy - 68, 44, "#ff3333", True, align=0.5, st=st, at=at)
+                    mg_text(rv, "!", cx, cy - 68, 44, "#ff3333", True, align=0.5, st=st, at=at)
 
-            # PNG-спрайт школьника
+            # Спрайт школьника (вращение через Matrix2D без Transform!)
             if not (g.invuln > 0 and int(g.time * 12) % 2 == 0):
                 px, py = int(g.px), int(T + g.py)
-                mg_blit_img(objs, "images/mg/player_stealth.png", px, py, 86, 86,
+                mg_blit_img(rv, "images/mg/player_stealth.png", px, py, 86, 86,
                             rotate=math.degrees(g.p_ang), st=st, at=at)
 
-            rv.blit(objs, (0, 0))
-
-            # Лаконичный верхний HUD в стиле Persona 3 Reload
+            # Лаконичный верхний HUD
             need_total = sum(1 for it in g.INGR if it["need"])
             got = need_total - len(g.need_left())
             lives_left = max(0, g.MAX_CATCHES - g.caught_count)
@@ -407,7 +484,7 @@ init python:
             mg_text(rv, hud, self.W // 2, 13, 25, hcol, True, align=0.5, st=st, at=at)
 
             if not g.done and not g.penalty_popup:
-                renpy.redraw(self, 0)
+                renpy.redraw(self, 0.018)
             if g.need_refresh:
                 renpy.timeout(0)
             return rv
@@ -578,12 +655,44 @@ init python:
     class BurgerDisplayable(renpy.Displayable):
         W, H = 1430, 1080
         ARENA_X = 410
-        _bg_cache = None
+        _static_gpu_tex = None
 
         def __init__(self, game, **kwargs):
             super(BurgerDisplayable, self).__init__(**kwargs)
             self.game = game
             self.last_st = None
+            if BurgerDisplayable._static_gpu_tex is None:
+                W, H, AX = self.W, self.H, self.ARENA_X
+                px, py = game.PLATE_X, game.PLATE_Y
+                def _draw_burger_bg(surf, cv):
+                    cv.rect("#05122c", (0, 0, W, H))
+                    try:
+                        if mg_loadable("images/bg/pgt_culinary_hall.webp"):
+                            with renpy.loader.load("images/bg/pgt_culinary_hall.webp", directory="images") as f:
+                                bg_s = renpy.display.pgrender.load_image(f, "pgt_culinary_hall.webp")
+                            bg_s = renpy.display.scale.smoothscale(bg_s, (W - AX, 850))
+                            dark = renpy.display.pgrender.surface((W - AX, 850), True)
+                            dark.fill((158, 158, 158, 255))
+                            bg_s.blit(dark, (0, 0), None, renpy.pygame.BLEND_RGBA_MULT)
+                            surf.blit(bg_s, (AX, 0))
+                        else:
+                            cv.rect("#2e1e15", (AX, 0, W - AX, 850))
+                    except Exception:
+                        cv.rect("#2e1e15", (AX, 0, W - AX, 850))
+                    cv.rect("#5f6b76", (AX, 850, W - AX, 230))
+                    cv.rect("#9aa8b5", (AX, 850, W - AX, 14))
+                    cv.rect("#f2f8ff", (24, 26, 366, 900))
+                    cv.rect("#0b2868", (24, 26, 366, 86))
+                    cv.rect("#00d4ff", (24, 26, 366, 900), 4)
+                    try:
+                        if mg_loadable("images/mg/burger_plate.png"):
+                            with renpy.loader.load("images/mg/burger_plate.png", directory="images") as f:
+                                pl_s = renpy.display.pgrender.load_image(f, "burger_plate.png")
+                            pl_s = renpy.display.scale.smoothscale(pl_s, (520, 130))
+                            surf.blit(pl_s, (int(px - 260), int(py + 4 - 68)))
+                    except Exception:
+                        pass
+                BurgerDisplayable._static_gpu_tex = MGGpuCanvas("burger_baked_bg_v2", W, H, _draw_burger_bg)
 
         def _blit_burger_layer(self, rv, lid, cx, yb, st, at):
             info = self.game.info(lid)
@@ -598,28 +707,7 @@ init python:
             g.update(dt)
 
             rv = renpy.Render(self.W, self.H)
-            cv = rv.canvas()
-
-            # Фотография учебного цеха поваров на заднем плане + прежний цвет столешницы
-            cv.rect("#05122c", (0, 0, self.W, self.H))
-            if renpy.loadable("images/bg/pgt_culinary_hall.png"):
-                if BurgerDisplayable._bg_cache is None:
-                    BurgerDisplayable._bg_cache = Transform(
-                        "images/bg/pgt_culinary_hall.png",
-                        size=(self.W - self.ARENA_X, 850),
-                        fit="cover",
-                        matrixcolor=BrightnessMatrix(-0.38)
-                    )
-                rv.blit(renpy.render(BurgerDisplayable._bg_cache, self.W - self.ARENA_X, 850, st, at), (self.ARENA_X, 0))
-            else:
-                cv.rect("#2e1e15", (self.ARENA_X, 0, self.W - self.ARENA_X, 850))
-            cv.rect("#5f6b76", (self.ARENA_X, 850, self.W - self.ARENA_X, 230))
-            cv.rect("#9aa8b5", (self.ARENA_X, 850, self.W - self.ARENA_X, 14))
-
-            # Список слоёв слева в стиле Persona 3 Reload (Белый-Синий-Голубой)
-            cv.rect("#f2f8ff", (24, 26, 366, 900))
-            cv.rect("#0b2868", (24, 26, 366, 86))
-            cv.rect("#00d4ff", (24, 26, 366, 900), 4)
+            rv.blit(renpy.render(BurgerDisplayable._static_gpu_tex, self.W, self.H, st, at), (0, 0))
             mg_text(rv, "РЕЦЕПТ", 242, 52, 30, "#ffffff", True, align=0.5, st=st, at=at)
 
             for i, lid in enumerate(reversed(g.ORDER)):
@@ -628,8 +716,11 @@ init python:
                 info = g.info(lid)
                 is_next = (idx == len(g.stack) and not g.has_wrong())
                 if is_next:
-                    cv.rect("#cceeff", (38, ry - 6, 338, 92))
-                    cv.rect("#00a8f0", (38, ry - 6, 338, 92), 3)
+                    mg_solid(rv, "#cceeff", 38, ry - 6, 338, 92, st, at)
+                    mg_solid(rv, "#00a8f0", 38, ry - 6, 338, 3, st, at)
+                    mg_solid(rv, "#00a8f0", 38, ry + 83, 338, 3, st, at)
+                    mg_solid(rv, "#00a8f0", 38, ry - 3, 3, 86, st, at)
+                    mg_solid(rv, "#00a8f0", 373, ry - 3, 3, 86, st, at)
 
                 mg_blit_img(rv, "images/mg/ingr_%s.png" % info["src"], 78, ry + 38, 64, 64, st=st, at=at)
                 mg_text(rv, "%d. %s" % (idx + 1, info["name"]), 120, ry + 22, 23, "#082567", True, st=st, at=at)
@@ -642,16 +733,14 @@ init python:
                         mark, mcol = "Х", "#1b449c"
                 mg_text(rv, mark, 358, ry + 18, 28, mcol, True, align=1.0, st=st, at=at)
 
-            # PNG-тарелка на столе
             px, py = g.PLATE_X, g.PLATE_Y
-            mg_blit_img(rv, "images/mg/burger_plate.png", px, py + 4, 520, 130,
-                        align_x=0.5, align_y=0.52, st=st, at=at)
 
-            # Подсказка-прицел на тарелке при удержании ингредиента
+            # Подсказка-прицел на тарелке при удержании ингредиента (через GPU Solid)
             if not g.served and g.holding:
                 hx_f = g.hand_x()
                 on_plate = abs(hx_f - px) <= 185
-                cv.line("#00e5ff66" if on_plate else "#ffffff44", (int(hx_f), 230), (int(hx_f), int(py - g.stack_height())), 3)
+                line_h = max(4, int(py - g.stack_height()) - 230)
+                mg_solid(rv, "#00e5ff66" if on_plate else "#ffffff44", int(hx_f) - 1, 230, 3, line_h, st, at)
 
             # Собранные PNG-слои бутера на тарелке
             yb = py
@@ -659,7 +748,10 @@ init python:
                 info = g.info(layer["id"])
                 self._blit_burger_layer(rv, layer["id"], px + layer["off"], yb, st, at)
                 if not layer["ok"]:
-                    cv.rect("#00e5ff", (int(px + layer["off"] - 165), int(yb - info["h"] - 8), 330, info["h"] + 12), 4)
+                    bx, by = int(px + layer["off"] - 165), int(yb - info["h"] - 8)
+                    bh = info["h"] + 12
+                    mg_solid(rv, "#00e5ff", bx, by, 330, 4, st, at)
+                    mg_solid(rv, "#00e5ff", bx, by + bh - 4, 330, 4, st, at)
                 yb -= info["h"]
 
             # Падающий PNG-ингредиент при выбросе на тарелку
@@ -679,7 +771,7 @@ init python:
                 mg_text(rv, "ОШИБКА СЛОЯ", px, 290, 34, "#00e5ff", True, align=0.5, st=st, at=at)
 
             if not g.served:
-                renpy.redraw(self, 0)
+                renpy.redraw(self, 0.022)
             if g.need_refresh:
                 renpy.timeout(0)
             return rv
@@ -714,10 +806,7 @@ screen screen_minigame_kitchen():
         xsize 1920
         ysize 1080
 
-        if renpy.loadable("images/bg/pgt_culinary_hall.png"):
-            add Transform("images/bg/pgt_culinary_hall.png", size=(1920, 1080), fit="cover", matrixcolor=BrightnessMatrix(-0.62))
-        else:
-            add Solid("#1a120d")
+        add Solid("#061024")
 
         # Арена кухни 1460 x 1018
         add KitchenStealDisplayable(mg_kitchen) xpos 20 ypos 30

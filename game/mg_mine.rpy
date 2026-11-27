@@ -346,6 +346,49 @@ init python:
         def cell_xy(self, r, c):
             return (int(c * self.CELL + self.CELL / 2), int(self.TOP + r * self.CELL + self.CELL / 2))
 
+        def _static_arena_render(self, st, at):
+            g = self.game
+            C = self.CELL
+            T = self.TOP
+            def _build(rv, _st, _at):
+                mg_solid(rv, "#061433", 0, 0, self.W, self.H, _st, _at)
+                mg_solid(rv, "#0b2866", 0, 0, self.W, T - 4, _st, _at)
+                mg_solid(rv, "#00d8ff", 0, T - 4, self.W, 4, _st, _at)
+                r_beton = renpy.render(self.im_beton, C, C, _st, _at)
+                r_dirt_light = renpy.render(self.im_dirt_light, C, C, _st, _at)
+                r_dirt_dark = renpy.render(self.im_dirt_dark, C, C, _st, _at)
+                for r in range(g.ROWS):
+                    for c in range(g.COLS):
+                        x, y = c * C, T + r * C
+                        rv.blit(r_dirt_light if (r + c) % 2 == 0 else r_dirt_dark, (x, y))
+                        if g.is_pillar(r, c):
+                            rv.blit(r_beton, (x, y))
+                ex_x, ex_y = g.exit[1] * C, T + g.exit[0] * C
+                mg_solid(rv, "#123d29cc", ex_x + 6, ex_y + 6, C - 12, C - 12, _st, _at)
+                mg_solid(rv, "#44ff99", ex_x + 4, ex_y + 4, C - 8, 5, _st, _at)
+                mg_solid(rv, "#44ff99", ex_x + 4, ex_y + C - 9, C - 8, 5, _st, _at)
+                mg_solid(rv, "#44ff99", ex_x + 4, ex_y + 9, 5, C - 18, _st, _at)
+                mg_solid(rv, "#44ff99", ex_x + C - 9, ex_y + 9, 5, C - 18, _st, _at)
+                mg_text(rv, "ВЫХОД", ex_x + C // 2, ex_y + C // 2 - 13, 20, "#aaffcc", True, align=0.5, st=_st, at=_at)
+            layer = MGStaticLayer.get(("mine_static_arena",), self.W, self.H, _build)
+            return renpy.render(layer, self.W, self.H, st, at)
+
+        @staticmethod
+        def _bomb_sprite_render(spark_idx, st, at):
+            S = 88
+            key = ("mine_bomb_spr", spark_idx)
+            def _build(r, _st, _at):
+                cv = r.canvas()
+                cx, cy = 44, 48
+                pulse = 28 if spark_idx == 0 else 32
+                cv.circle("#000000", (cx, cy), pulse + 3)
+                cv.circle("#1b1b1b", (cx, cy), pulse)
+                cv.circle("#555555", (cx - 9, cy - 9), 8)
+                cv.line("#c8a165", (cx + 10, cy - 22), (cx + 22, cy - 38), 4)
+                cv.circle("#ffdd33" if spark_idx == 0 else "#ff5522", (cx + 23, cy - 40), 8)
+            layer = MGStaticLayer.get(key, S, S, _build)
+            return renpy.render(layer, S, S, st, at)
+
         def render(self, width, height, st, at):
             g = self.game
             dt = 0.0 if self.last_st is None else max(0.0, min(0.05, st - self.last_st))
@@ -355,62 +398,36 @@ init python:
             C = self.CELL
             T = self.TOP
             rv = renpy.Render(self.W, self.H)
-            cv = rv.canvas()
-            cv.rect("#061433", (0, 0, self.W, self.H))
-            cv.rect("#0b2866", (0, 0, self.W, T - 4))
-            cv.rect("#00d8ff", (0, T - 4, self.W, 4))
+            rv.blit(self._static_arena_render(st, at), (0, 0))
 
-            r_beton = renpy.render(self.im_beton, C, C, st, at)
-            r_dirt_light = renpy.render(self.im_dirt_light, C, C, st, at)
-            r_dirt_dark = renpy.render(self.im_dirt_dark, C, C, st, at)
             r_ugeli = renpy.render(self.im_ugeli, C, C, st, at)
+            for (r, c) in g.rock:
+                rv.blit(r_ugeli, (c * C, T + r * C))
 
-            for r in range(g.ROWS):
-                for c in range(g.COLS):
-                    x, y = c * C, T + r * C
-                    rv.blit(r_dirt_light if (r + c) % 2 == 0 else r_dirt_dark, (x, y))
-                    if g.is_pillar(r, c):
-                        rv.blit(r_beton, (x, y))
-                    elif (r, c) in g.rock:
-                        rv.blit(r_ugeli, (x, y))
-
-            fx_rv = renpy.Render(self.W, self.H)
-            fx_cv = fx_rv.canvas()
-            ex_x, ex_y = g.exit[1] * C, T + g.exit[0] * C
-            fx_cv.rect("#123d29cc", (ex_x + 6, ex_y + 6, C - 12, C - 12))
-            fx_cv.rect("#44ff99", (ex_x + 4, ex_y + 4, C - 8, C - 8), 4 + int(2 * math.sin(g.time * 5)))
-
-            # Осколки угля, разгрызенного крысами
+            # Осколки угля, разгрызенного крысами (без полноэкранного canvas)
             for cr in g.crumbles:
                 cx, cy = self.cell_xy(cr["r"], cr["c"])
                 prog = 1.0 - max(0.0, cr["t"]) / 0.42
-                rad_out = 10 + int(prog * 38)
-                sz = max(3, int(9 * (1.0 - prog * 0.6)))
-                for k in range(8):
-                    ang = k * 0.785 + 0.3
-                    px = int(cx + math.cos(ang) * rad_out)
-                    py = int(cy + math.sin(ang) * rad_out)
-                    fx_cv.circle("#3a3a42" if k % 2 == 0 else "#1e1e24", (px, py), sz)
+                rad_out = 10 + int(prog * 36)
+                sz = max(4, int(12 * (1.0 - prog * 0.5)))
+                for k in range(6):
+                    ang = k * 1.047 + 0.3
+                    px = int(cx + math.cos(ang) * rad_out) - sz // 2
+                    py = int(cy + math.sin(ang) * rad_out) - sz // 2
+                    mg_solid(rv, "#3a3a42" if k % 2 == 0 else "#1e1e24", px, py, sz, sz, st, at)
 
-            # Вспышки
+            # Вспышки (через GPU Solid)
             for f in g.blasts:
                 for (r, c) in f["cells"]:
                     x, y = c * C, T + r * C
-                    fx_cv.rect("#ff7a1a", (x + 5, y + 5, C - 10, C - 10))
-                    fx_cv.rect("#ffe066", (x + 22, y + 22, C - 44, C - 44))
+                    mg_solid(rv, "#ff7a1a", x + 5, y + 5, C - 10, C - 10, st, at)
+                    mg_solid(rv, "#ffe066", x + 22, y + 22, C - 44, C - 44, st, at)
 
-            # Заряды с горящим фитилём
+            # Заряды с горящим фитилём (закэшированный на GPU спрайт)
+            spark_idx = int(g.time * 10) % 2
             for b in g.charges:
                 cx, cy = self.cell_xy(b["r"], b["c"])
-                pulse = 28 + int(5 * math.sin(g.time * (10 + (2.0 - b["t"]) * 8)))
-                fx_cv.circle("#000000", (cx, cy + 4), pulse + 3)
-                fx_cv.circle("#1b1b1b", (cx, cy + 4), pulse)
-                fx_cv.circle("#555555", (cx - 9, cy - 5), 8)
-                fx_cv.line("#c8a165", (cx + 10, cy - 18), (cx + 22, cy - 34), 4)
-                fx_cv.circle("#ffdd33" if int(g.time * 12) % 2 else "#ff5522", (cx + 23, cy - 36), 8)
-
-            rv.blit(fx_rv, (0, 0))
-            mg_text(rv, "ВЫХОД", g.exit[1] * C + C // 2, T + g.exit[0] * C + C // 2 - 13, 20, "#aaffcc", True, align=0.5, st=st, at=at)
+                rv.blit(self._bomb_sprite_render(spark_idx, st, at), (cx - 44, cy - 44))
 
             # Крысы (анимация mish по 4 направлениям)
             for rat in g.rats:
@@ -427,7 +444,7 @@ init python:
                 r_rat = renpy.render(frames[f_idx], 92, 92, st, at)
                 rv.blit(r_rat, (cx - 46, cy - 46))
 
-            # Шахтёр (анимация ходьбы в 4 стороны из ssshhhaaahhhttteeerrr)
+            # Шахтёр (анимация ходьбы в 4 стороны)
             t = g.pt
             pr = g.p_prev[0] + (g.p_cell[0] - g.p_prev[0]) * t
             pc = g.p_prev[1] + (g.p_cell[1] - g.p_prev[1]) * t
@@ -445,13 +462,13 @@ init python:
                 r_miner = renpy.render(m_frames[m_idx], 92, 92, st, at)
                 rv.blit(r_miner, (cx - 46, cy - 48))
 
-            # Лаконичный HUD в стиле Persona 3 Reload
+            # Лаконичный HUD
             hud = "Заряды: %d / %d      Крысы: %d      Уголь: %d" % (
                 g.MAX_CHARGES - len(g.charges), g.MAX_CHARGES, g.rats_left(), g.rocks_broken)
             mg_text(rv, hud, self.W // 2, 11, 26, "#ffffff", True, align=0.5, st=st, at=at)
 
             if not g.done:
-                renpy.redraw(self, 0)
+                renpy.redraw(self, 0.022)
 
             if g.need_refresh:
                 renpy.timeout(0)
@@ -503,8 +520,8 @@ screen screen_minigame_mine():
         xsize 1920
         ysize 1080
 
-        if renpy.loadable("images/bg/pgt_mine_tunnel.png"):
-            add Transform("images/bg/pgt_mine_tunnel.png", size=(1920, 1080), fit="cover", matrixcolor=BrightnessMatrix(-0.52))
+        if renpy.loadable("images/bg/poligon.webp"):
+            add Transform("images/bg/poligon.webp", size=(1920, 1080), fit="cover", matrixcolor=BrightnessMatrix(-0.52))
         else:
             add Solid("#130e0b")
 

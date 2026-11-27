@@ -180,6 +180,9 @@ init python:
             self.game = game
             self.size = self.M * 2 + self.CELL * game.N
             self.last_st = None
+            self.last_cell = None
+            self._cached_sig = None
+            self._cached_paths_layer = None
 
         def center(self, cell):
             return (self.M + cell[1] * self.CELL + self.CELL // 2, self.M + cell[0] * self.CELL + self.CELL // 2)
@@ -193,6 +196,71 @@ init python:
                 return (r, c)
             return None
 
+        def _base_board_render(self, st, at):
+            g = self.game
+            S = self.size
+            def _build(board, _st, _at):
+                cv = board.canvas()
+                cv.rect("#07183d", (0, 0, S, S))
+                cv.rect("#00d8ff", (3, 3, S - 6, S - 6), 4)
+                for r in range(g.N):
+                    for c in range(g.N):
+                        x0, y0 = self.M + c * self.CELL, self.M + r * self.CELL
+                        cv.rect("#0d2864", (x0 + 3, y0 + 3, self.CELL - 6, self.CELL - 6), 1)
+                        cv.circle("#1c4ca8", self.center((r, c)), 9)
+                for k, terms in g.TERMINALS.items():
+                    col = g.PHASES[k]["col"]
+                    for cell in terms:
+                        cx, cy = self.center(cell)
+                        cv.circle("#040b1c", (cx, cy), 52)
+                        cv.circle(col, (cx, cy), 46)
+                        cv.circle("#091e4a", (cx, cy), 29)
+                        mg_text(board, k, cx, cy - 21, 36, col, True, align=0.5, st=_st, at=_at)
+            layer = MGStaticLayer.get(("wiring_base_grid",), S, S, _build)
+            return renpy.render(layer, S, S, st, at)
+
+        def _paths_render(self, st, at):
+            g = self.game
+            S = self.size
+            sig = tuple((k, tuple(g.paths[k])) for k in g.ORDER)
+            if sig != self._cached_sig or self._cached_paths_layer is None:
+                self._cached_sig = sig
+                def _build(layer_rv, _st, _at):
+                    cv = layer_rv.canvas()
+                    for k in g.ORDER:
+                        p = g.paths[k]
+                        col = g.PHASES[k]["col"]
+                        if len(p) >= 2:
+                            pts = [self.center(cell) for cell in p]
+                            for i in range(len(pts) - 1):
+                                cv.line("#040b1c", pts[i], pts[i + 1], 42)
+                            for i in range(len(pts) - 1):
+                                cv.line(col, pts[i], pts[i + 1], 26)
+                            for pt in pts:
+                                cv.circle(col, pt, 13)
+                    for k, cps in g.CHECKPOINTS.items():
+                        col = g.PHASES[k]["col"]
+                        for cell in cps:
+                            cx, cy = self.center(cell)
+                            cv.polygon("#040b1c", mg_pts([(cx, cy - 40), (cx + 40, cy), (cx, cy + 40), (cx - 40, cy)]))
+                            dia = mg_pts([(cx, cy - 33), (cx + 33, cy), (cx, cy + 33), (cx - 33, cy)])
+                            cv.polygon(col, dia, 0 if cell in g.paths[k] else 6)
+                    # Клеммы поверх концов проводов
+                    for k, terms in g.TERMINALS.items():
+                        p = g.paths[k]
+                        if not p:
+                            continue
+                        col = g.PHASES[k]["col"]
+                        for cell in terms:
+                            if cell in p:
+                                cx, cy = self.center(cell)
+                                cv.circle("#040b1c", (cx, cy), 52)
+                                cv.circle(col, (cx, cy), 46)
+                                cv.circle("#091e4a", (cx, cy), 29)
+                                mg_text(layer_rv, k, cx, cy - 21, 36, col, True, align=0.5, st=_st, at=_at)
+                self._cached_paths_layer = MGStaticLayer(S, S, _build)
+            return renpy.render(self._cached_paths_layer, S, S, st, at)
+
         def render(self, width, height, st, at):
             g = self.game
             S = self.size
@@ -202,75 +270,26 @@ init python:
                 g.shock_left = max(0.0, g.shock_left - dt)
 
             rv = renpy.Render(S, S)
-            board = renpy.Render(S, S)
-            cv = board.canvas()
-            cv.rect("#07183d", (0, 0, S, S))
-            cv.rect("#00d8ff", (3, 3, S - 6, S - 6), 4)
-            for r in range(g.N):
-                for c in range(g.N):
-                    x0, y0 = self.M + c * self.CELL, self.M + r * self.CELL
-                    cv.rect("#0d2864", (x0 + 3, y0 + 3, self.CELL - 6, self.CELL - 6), 1)
-                    cv.circle("#1c4ca8", self.center((r, c)), 9)
-
-            # Провода
-            for k in g.ORDER:
-                p = g.paths[k]
-                col = g.PHASES[k]["col"]
-                if len(p) >= 2:
-                    pts = [self.center(cell) for cell in p]
-                    for i in range(len(pts) - 1):
-                        cv.line("#040b1c", pts[i], pts[i + 1], 42)
-                    for i in range(len(pts) - 1):
-                        cv.line(col, pts[i], pts[i + 1], 26)
-                    for pt in pts:
-                        cv.circle(col, pt, 13)
-
-            # Обязательные точки
-            for k, cps in g.CHECKPOINTS.items():
-                col = g.PHASES[k]["col"]
-                for cell in cps:
-                    cx, cy = self.center(cell)
-                    cv.polygon("#040b1c", mg_pts([(cx, cy - 40), (cx + 40, cy), (cx, cy + 40), (cx - 40, cy)]))
-                    dia = mg_pts([(cx, cy - 33), (cx + 33, cy), (cx, cy + 33), (cx - 33, cy)])
-                    cv.polygon(col, dia, 0 if cell in g.paths[k] else 6)
-
-            # Клеммы
-            for k, terms in g.TERMINALS.items():
-                col = g.PHASES[k]["col"]
-                for cell in terms:
-                    cx, cy = self.center(cell)
-                    cv.circle("#040b1c", (cx, cy), 52)
-                    cv.circle(col, (cx, cy), 46)
-                    cv.circle("#091e4a", (cx, cy), 29)
-                    mg_text(board, k, cx, cy - 21, 36, col, True, align=0.5, st=st, at=at)
-
             ox, oy = 0, 0
             if g.shock_left > 0.2:
-                ox, oy = random.randint(-14, 14), random.randint(-14, 14)
-            rv.blit(board, (ox, oy))
+                ox, oy = random.randint(-12, 12), random.randint(-12, 12)
+            rv.blit(self._base_board_render(st, at), (ox, oy))
+            rv.blit(self._paths_render(st, at), (ox, oy))
 
-            # Эффект удара током
+            # Эффект удара током (кратковременно 0.8с, без полноэкранного canvas на каждый кадр)
             if g.shock_left > 0:
-                fx = renpy.Render(S, S)
-                fc = fx.canvas()
-                alpha = int(210 * min(1.0, g.shock_left / 0.8))
-                fc.rect("#bfe9ff%02x" % alpha, (0, 0, S, S))
-                for _ in range(6):
-                    pts = [(random.randint(0, S), 0)]
-                    while pts[-1][1] < S:
-                        pts.append((pts[-1][0] + random.randint(-65, 65), pts[-1][1] + random.randint(45, 95)))
-                    fc.lines("#ffffff", False, mg_pts(pts), 6)
-                    fc.lines("#00d8ff", False, mg_pts(pts), 3)
-                mg_text(fx, "КЗ!", S // 2, S // 2 - 42, 68, "#071844", True, align=0.5, st=st, at=at)
-                rv.blit(fx, (0, 0))
-                renpy.redraw(self, 0)
+                alpha = int(195 * min(1.0, g.shock_left / 0.8))
+                mg_solid(rv, "#bfe9ff%02x" % alpha, 0, 0, S, S, st, at)
+                mg_text(rv, "КЗ!", S // 2, S // 2 - 42, 68, "#071844", True, align=0.5, st=st, at=at)
+                renpy.redraw(self, 0.04)
 
-            # Пока нет подписи в журнале — щит закрыт
+            # Пока нет подписи в журнале — щит закрыт (закэшированный оверлей)
             if not g.tb_signed:
-                ov = renpy.Render(S, S)
-                ov.canvas().rect("#05122ed8", (0, 0, S, S))
-                mg_text(ov, "ДОПУСК ЗАКРЫТ", S // 2, S // 2 - 24, 44, "#00e5ff", True, align=0.5, st=st, at=at)
-                rv.blit(ov, (0, 0))
+                def _build_ov(ov, _st, _at):
+                    mg_solid(ov, "#05122ed8", 0, 0, S, S, _st, _at)
+                    mg_text(ov, "ДОПУСК ЗАКРЫТ", S // 2, S // 2 - 24, 44, "#00e5ff", True, align=0.5, st=_st, at=_at)
+                ov_layer = MGStaticLayer.get(("wiring_locked_ov",), S, S, _build_ov)
+                rv.blit(renpy.render(ov_layer, S, S, st, at), (0, 0))
             return rv
 
         def event(self, ev, x, y, st):
@@ -283,18 +302,19 @@ init python:
                     return None
                 if not g.tb_signed:
                     mg_sfx("audio/turnstile_fail.wav")
-                    renpy.restart_interaction()
                     return None
+                self.last_cell = cell
                 g.start_draw(cell)
                 renpy.redraw(self, 0)
-                renpy.restart_interaction()
             elif ev.type == pygame.MOUSEMOTION and g.drawing is not None:
                 cell = self.cell_at(x, y)
-                if cell is not None:
+                if cell is not None and cell != self.last_cell:
+                    self.last_cell = cell
                     if g.extend_to(cell):
                         renpy.restart_interaction()
                     renpy.redraw(self, 0)
             elif ev.type == pygame.MOUSEBUTTONUP and ev.button == 1 and g.drawing is not None:
+                self.last_cell = None
                 g.finish_draw()
                 renpy.redraw(self, 0)
                 renpy.restart_interaction()
